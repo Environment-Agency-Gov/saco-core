@@ -1,0 +1,16 @@
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python==3.13.7
+  - numpy==2.3.3
+  - scipy==1.16.2
+  - pandas==2.3.2
+  - networkx==3.5
+  - pyarrow==21.0.0
+  - pandera==0.26.1
+  - cvxpy==1.7.2
+  - pytest==8.4.2
+  - sphinx==8.2.3
+  - sphinx-rtd-theme==3.0.2
+  - jupyterlab==4.4.7

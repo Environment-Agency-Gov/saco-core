@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = "saco"
+version = "0.0.0"
+readme = "README.rst"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy",
+    "scipy>=1.16.0",
+    "pandas",
+    "networkx",
+    "pyarrow",
+    "pandera",
+    "cvxpy",
+    "pytest",
+    "sphinx",
+    "sphinx-rtd-theme",
+    "jupyterlab",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
