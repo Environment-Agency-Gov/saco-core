@@ -441,25 +441,27 @@ class Dataset:
                 be overridden by custom_targets and/or df arguments. See notes below for
                 valid arguments.
             custom_targets: For overriding overall_target for specific waterbodies. See
-                discussion/example above for a guide to formulating this dictionary.
+                discussion/example below for a guide to formulating this dictionary.
             overwrite_existing: Whether to overwrite any flow target columns that
                 already exist in the dataframe. If False (default) then overall_target
                 and custom_targets will not be used to overwrite existing flow target
                 columns. However, if df is not None, it will be used regardless of
                 overwrite_existing value.
             df: Dataframe indexed by waterbody and containing any flow target columns
-                that should be given priority. It does not need to contain all
+                that should be given priority (Ml/d). It does not need to contain all
                 waterbodies in the domain/dataset. Used regardless of
                 overwrite_existing.
 
         Notes:
+
             Valid arguments for overall_target are: 'compliant', 'band-1', 'band-2',
-            'band-3' and 'no-det'. The first four options refer to compliance bands
-            (relative to the EFI)> In each case, the target is the minimum flow needed
-            to achieve the band (i.e. the lower bound/edge of the band).
+            'band-3', 'none' and 'no-det'. The first four options refer to compliance
+            bands (relative to the EFI). In each case, the target is the minimum flow
+            needed to achieve the band (i.e. the lower bound/edge of the band). 'none'
+            and 'band-3' are aliases (i.e. no flow target / trivial target of zero).
 
             The final option ('no-det') stands for "no deterioration" of compliance
-            band between the RA and FL scenarios. Again, this  is translated into the
+            band between the RA and FL scenarios. Again, this is translated into the
             minimum flow required to meet this condition, i.e. the lower bound of the
             appropriate band. Note that this is not the same as no change between the
             RA and FL scenario flows (which could be implemented by passing an
@@ -474,11 +476,12 @@ class Dataset:
             supplied through the df argument. This is given priority and it will also be
             used regardless of the overwrite_existing argument (currently). This
             dataframe should have waterbody ID as its index (with name EA_WB_ID) and
-            one or more flow target columns whose names follow ``f'QT{S}Q{P}'``, where
-            ``S`` is a scenario name and ``P`` is a flow percentile.
+            one or more flow target columns (in Ml/d) whose names follow
+            ``f'QT{S}Q{P}'``, where ``S`` is a scenario name and ``P`` is a flow
+            percentile.
 
         """
-        valid_targets = ['compliant', 'band-1', 'band-2', 'band-3', 'no-det']
+        valid_targets = ['compliant', 'band-1', 'band-2', 'band-3', 'none', 'no-det']
 
         if overall_target not in valid_targets:
             raise ValueError(f'Overall flow target not recognised: {overall_target}')
@@ -599,7 +602,7 @@ class Dataset:
         """See docstring for set_flow_targets, for which this method is a helper."""
         col_mapper = {
             'compliant': '__COMPLIANT', 'band-1': '__BAND1', 'band-2': '__BAND2',
-            'band-3': '__BAND3', 'no-det': '__NO_DET',
+            'band-3': '__BAND3', 'none': '__NONE', 'no-det': '__NO_DET',
         }
 
         df = self.mt.data.copy()
@@ -615,6 +618,7 @@ class Dataset:
             f2 = self.constants.compliance_bin_edges[1]
             df['__BAND2'] = df[efi_col] + f2 * df[qnat_col]
             df['__BAND3'] = 0.0
+            df['__NONE'] = 0.0
 
             if ra_comp_col in df.columns:
                 df['__NO_DET'] = df[efi_col]
