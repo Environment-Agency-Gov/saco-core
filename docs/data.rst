@@ -1,14 +1,14 @@
 Data
 ====
 
-As noted in the :doc:`overview`, the SACO tool is based around the Water Resources GIS
-(WRGIS) conceptualisation and tables. Here we provide some further background on WRGIS
-and its use in the SACO tool.
+The SACO tool is based around the Water Resources GIS (WRGIS) conceptualisation and
+tables. Here we provide some further background on WRGIS and its use in the SACO tool.
 
 .. note::
 
     WRGIS data *may* be made available under licence following a data request to the
-    Environment Agency.
+    Environment Agency. Please contact sustainable.abstraction@environment-agency.gov.uk
+    for further information.
 
 WRGIS
 -----
@@ -19,8 +19,8 @@ flow duration curve (FDC) for all Water Framework Directive (WFD) surface waterb
 in England. These percentiles are (lowest flow to highest flow): 95, 70, 50, 30.
 The WRGIS database does not contain time series information.
 
-Impacts are provided for three artificial influence scenarios, which may be defined
-approximately as:
+Impacts are provided for three artificial influence scenarios, which may be broadly
+defined as:
 
     - Recent actual: mean impacts over a recent ~6-year period
     - Fully licensed: hypothetical impacts if all abstractions were to take place at
@@ -83,8 +83,8 @@ separate value column for the impact of each combination of scenario and percent
 
 .. note::
 
-    Some artificial influences are highly complex, so care is needed when interpreting
-    the various tables in WRGIS.
+    Some artificial influences are highly complex, so care (and often local expertise)
+    is needed when using and interpreting the various tables in WRGIS.
 
 Conceptualisation
 ~~~~~~~~~~~~~~~~~
@@ -101,7 +101,7 @@ Here we summarise a few relevant aspects of the WRGIS conceptual model:
       a fixed set of proportions (summing to 100%). These proportions are constant
       across flow percentiles and abstraction scenarios.
     - Total artificial influence impacts are disaggregated across the FDC (selected
-      percentiles) with reference to known/presumed seasonality.
+      percentiles) with reference to known/modelled seasonality.
     - Scenario flows are defined as the flows resulting after artificial influences
       have been applied to natural flows. These are effectively denaturalised flows.
     - Scenario flows are calculated through a simple water balance for a given
@@ -115,29 +115,29 @@ Here we summarise a few relevant aspects of the WRGIS conceptual model:
 Limitations
 ~~~~~~~~~~~
 
-As noted in the :doc:`overview`, the SACO tool operates in "WRGIS world". Indeed, the
-tool explicitly seeks to preserve the "rules" of this world. Yet, as a national data
-product, WRGIS encodes a number of simplifications and assumptions, including those
-outlined in the previous section. These features are inherited by the SACO tool. It is
-also bound by limitations of the data, i.e. the uncertainties, approximations and
-errors involved in translating observed or estimated quantities into the WRGIS database.
+The SACO tool operates in "WRGIS world" and explicitly seeks to preserve the "rules" of
+this world. Yet, as a national data product, WRGIS encodes a number of simplifications
+and assumptions, including those outlined in the previous section. These features are
+inherited by the SACO tool. It is also bound by limitations of the data, i.e. the
+uncertainties, approximations and errors involved in translating observed or estimated
+quantities into the WRGIS database.
 
 It is important to note that the SACO tool is "downstream" of WRGIS. This means that it
-takes WRGIS tables as inputs. One implication of this is that the SACO tool is
+takes WRGIS tables as inputs. One implication of this is that the SACO tool is currently
 "downstream" of the process that assigns an impact to each artificial influence at each
 flow percentile to create the "base" WRGIS. (As noted above, this assignment is
 undertaken by the WRGIS toolset using information from the CAMS ledgers.) The SACO tool
 can explore the implications of changing specific numbers in the tables (via the
 Calculator and Optimiser components outlined in the :doc:`overview`), but it does not
-contain the logic/data by which the WRGIS toolset assigns the "base" impacts during
-construction of the WRGIS database.
+contain all the logic/data through which "base" impacts are assigned in the ledgers and
+WRGIS.
 
 Processing
 ----------
 
 Functions for processing the raw data tables from the WRGIS database (currently in
-Access format) into the format required by SACO are not included within the package
-currently. To summarise this functionality, the main processing steps are:
+Access format) into the format required by SACO are not included within the SACO
+package currently. To summarise this functionality, the main processing steps are:
 
     - Extract tables and perform basic checks of indexes and important columns. Columns
       not required in the SACO tool are filtered out.
@@ -158,7 +158,7 @@ directory containing these files forms the main input to the SACO tool.
     EFIs are calculated as per WRGIS. This is consistent with the CAMS ledgers at the
     95th flow percentile, but some (typically small) divergence is possible at higher
     flow percentiles. The calculations in the CAMS ledgers use additional data that are
-    not as readily available at the waterbody scale. However, work is underway to
+    not yet readily available at the waterbody scale. However, work is underway to
     harmonise the WRGIS/SACO method of EFI calculation with the CAMS ledger method for
     full consistency above the 95th percentile.
 
@@ -168,5 +168,5 @@ Further Details
 See the :doc:`fields` and :doc:`tutorial` pages for more explanation of each of the
 tables involved in SACO input/output. Synthetic examples of the tables/data (with no
 relationship to any real waterbodies or artificial influences) are available in the
-repository (under tests/data). These examples can be read in and viewed using the
-notebook in the examples folder of the repository.
+repository (under the examples directory, as well as in tests/data). These examples can
+be read in and viewed using the notebook in the examples folder of the repository.

@@ -26,7 +26,7 @@ interact with are:
 
 We provide an initial guide to these objects/components below. See the "Reference"
 sections of the documentation for further details, including information about additional
-"helper" functions.
+helper functions.
 
 .. note::
 
@@ -78,7 +78,7 @@ The tables have various properties, but most importantly each table class posses
 ``data`` attribute, which is a pandas.DataFrame. Therefore, to access the dataframe of
 surface water abstractions, we can use ``ds.swabs.data``. We can then query or
 manipulate the data table as we would any pandas.DataFrame. A description of the column
-indexes and fields is given in :doc:`data`.
+indexes and fields is given in :doc:`fields`.
 
 Changing Numbers
 ~~~~~~~~~~~~~~~~
@@ -105,8 +105,8 @@ merge/join operations etc.
 
     The Master (``mt``) table and its data should not be set or edited directly by a
     typical user (in general). See below about (1) using the Calculator to obtain an
-    updated Master table and (2) using specific methods to ensure that a Dataset's
-    Master table is ready to go into the Optimiser.
+    updated Master table and (2) using specific methods to ensure that a Dataset and
+    its Master table are ready to go into the Optimiser.
 
 Other Functionality
 ~~~~~~~~~~~~~~~~~~~
@@ -114,8 +114,7 @@ Other Functionality
 The ``Dataset`` possesses additional functionality to help set table values, write
 tables to output files, work with the "network" of waterbodies, and prepare for input
 to the Optimiser component. This functionality (the "methods" of ``Dataset``) are
-described in :doc:`reference-dataset`. Some additional helper functions for working
-with a ``Dataset`` are described there too.
+described in :doc:`reference-dataset`.
 
 Calculator
 ----------
@@ -129,24 +128,45 @@ calculate scenario flows, surpluses/deficits and compliance bands based on the i
     calculator = Calculator(ds)
     output_dataset = calculator.run()
 
-Optional Arguments
-~~~~~~~~~~~~~~~~~~
-
-Optional arguments can be provided to the ``Calculator`` to customise its execution, as
-described in :doc:`reference-calculate`. One such argument defined on initialisation of
-the ``Calculator`` is named ``capping_method`` and controls the approach to "unfeasible"
-impacts - prescribed abstraction impacts that cannot be satisfied. See :doc:`calculator`
-for a more precise explanation of this point. By default, the Calculator takes a
-WRGIS-like approach to this issue.
-
-Writing Outputs
-~~~~~~~~~~~~~~~
+In the example above we rely on default arguments, which will run the ``Calculator``
+for all scenario/percentile combinations and for the whole domain in the input
+``Dataset`` (i.e. all waterbodies present). It will also run with some default
+methodological choices (see below for more on this).
 
 By default, the ``run`` method returns a complete ``Dataset`` with an updated Master
-table (i.e. one that is consistent with all the other tables in the ``Dataset``). This
-can be saved as follows (see :doc:`reference-dataset` for guidance on output options)::
+table (i.e. one that is consistent with all the other tables in the ``Dataset``). If we
+want to save this ``Dataset`` (i.e. all of its component tables) at this point, we could
+do so as follows (see :doc:`reference-dataset` for guidance on output options)::
 
     output_dataset.write_tables(output_folder='/my/output/folder')
+
+However, if we want to customise the execution of the ``Calculator``, we can provide
+optional arguments, as described in :doc:`reference-calculate`. One such argument
+defined on initialisation of the ``Calculator`` is named ``capping_method``. This
+argument controls the approach to "unfeasible" impacts - prescribed abstraction impacts
+that cannot be satisfied. See :doc:`calculator` for a more precise explanation of this
+point. By default, the Calculator takes a WRGIS-like approach to this issue. Using the
+:doc:`reference-calculate` documentation to understand the available options, we could
+override the default and take WBAT-like approach as follows::
+
+    calculator = Calculator(ds, capping_method='simple')
+
+We might then for example ask the ``Calculator.run`` method to return only an updated
+Master table as a pandas.DataFrame::
+
+    updated_master_table = calculator.run(master_only=True)
+
+These are just a couple of examples of customisation via optional arguments - see
+:doc:`reference-calculate` for more options and details.
+
+.. note::
+
+    If capping has been applied to avoid propagation of unfeasible impacts, scenario
+    flows output from the Calculator may be larger than initially expected from
+    performing a simple "ups" water balance calculation for some waterbodies. This is
+    because capping reduced net impacts upstream to retain physical plausibility. The
+    Master table gives the "target" artificial influences components, which are not
+    capped individually.
 
 Optimiser
 ---------
@@ -167,6 +187,7 @@ necessarily relevant to the ``Calculator``. The relevant tables and columns are
     - GWABs_NBB table: requires a flag column to indicate whether a given impact (row)
       should be available for change in the optimisation (1) or not (0).
     - SWABS_NBB table: as per GWABs_NBB table.
+    - SupResGW_NBB table: requires a flag column - we return to this below.
 
 See :doc:`fields` for a guide to the naming conventions for these columns.
 
@@ -184,8 +205,8 @@ included/excluded in optimisation.
 .. note::
 
     If any further manipulation of the inclusion/exclusion flag is needed it could be
-    achieved by working with the relevant dataframes (i.e. ``ds.swabs.data`` and
-    ``ds.gwabs.data``).
+    achieved by working with the relevant dataframes (i.e. ``ds.swabs.data``,
+    ``ds.gwabs.data`` and ``ds.sup.data``).
 
 Optional Arguments
 ~~~~~~~~~~~~~~~~~~
@@ -220,14 +241,67 @@ Outputs
 ~~~~~~~
 
 The contents of the output from ``Optimiser.run`` are similar to a normal ``Dataset``,
-apart from:
+apart from (keeping complex impacts to one side for the moment):
 
     - The SWABS_NBB and GWABs_NBB tables now contain abstraction impacts as they are
       the optimisation has been completed (i.e. the impacts that remain after the
       “fix”).
     - Similarly, the Master table summarises the water balance and compliance etc for
       the solution formulated by the ``Optimiser``.
-    - Two additional tables are present: SWABS_Changes and GWABS_Changes (accessible
-      via the output dataset's attributes ``swabs_chg`` and ``gwab_chg``, respectively.
+    - Additional tables are present: SWABS_Changes and GWABS_Changes (accessible via
+      the output dataset's attributes ``swabs_chg`` and ``gwab_chg``, respectively.
       These tables contain the impact reductions (Ml/d) required relative to a
       “reference” ``Dataset`` - see :doc:`reference-optimise`.
+
+Complex Impacts
+~~~~~~~~~~~~~~~
+
+Exploratory and optional functionality has been included to allow specific types of
+complex impacts to be included in optimisation. As noted above, the SupResGW_NBB table
+thus requires a flag column to indicate whether a given complex impact (row) should be:
+
+    - 0: Excluded from optimisation
+    - 1: Included as a reservoir compensation flow increase
+    - 2: Included as a complex abstraction
+
+The default is for all complex impacts to be excluded from optimisation. Thus, the
+``Dataset.set_optimise_flag`` method will insert a flag column of zeros, if a column
+has not already been added to the table.
+
+If we wish to include specific complex impacts in optimisation, we need to manually
+adjust the flag column for the appropriate rows. This can be achieved in memory using
+dataframe operations, for example::
+
+    ds.sup.data[ds.sup.data.index == 'complex-impact-id', 'Optimise_Flag'] = 1
+
+If we specify that a reservoir compensation flow increase is allowed in optimisation,
+we also need to indicate that maximum increase permitted. This should be done for the
+relevant scenarios and percentiles under consideration. For example, to permit a maximum
+reservoir compensation flow increase of 5.0 Ml/d, we could do the following::
+
+    ds.sup.data[ds.sup.data.index == 'complex-impact-id', 'SUPFLQ95_MAX_INCREASE'] = 5.0
+
+Once the flag field and any maximum increase fields have been added to the relevant
+``Dataset`` table, the ``Optimiser`` can be run in the way described above. Outputs are
+as detailed above, with the addition of a SupResGW_Changes table that gives any changes
+to complex impacts. Note that positive numbers in this table indicate increases to
+compensation flows or *reductions in complex abstraction impacts*. The latter sign
+convention is opposite to that for SWABS_Changes and GWABS_Changes. It arises because
+complex impacts can be positive or negative.
+
+Some important points to note about the behaviour of complex impact functionality in the
+``Optimiser`` are:
+
+    - Use of this functionality will typically require local knowledge of specific
+      impacts *and* how they have been represented in CAMS ledgers and WRGIS.
+    - In its current implementation, the Optimiser seeks to minimise increases to
+      reservoir compensation flows in its solution for several reasons. It will only
+      increase a compensation flow if it helps to meet flow targets that would have
+      otherwise been missed. Other approaches may be explored in future.
+    - Complex abstractions (flag = 2) are treated in the same way as normal surface and
+      groundwater abstractions. The Optimiser identifies required impact reductions for
+      the scenario/percentile combination in question, rather than changes to complex
+      licence conditions.
+    - A user has the option to explore the implications of different prescribed changes
+      to complex impacts by editing the relevant rows in the data table and excluding
+      them from optimisation.

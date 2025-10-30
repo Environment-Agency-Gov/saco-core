@@ -37,10 +37,15 @@ Note the following sign conventions used in the various tables:
       other impact increasing flows) and negative if representing an abstraction (or
       other impact decreasing flows). This is also the case for the net complex impact
       terms in the Master table.
-    - Required abstraction impact changes (an Optimiser output) are given as negative
-      to indicate that an impact needs to be reduced relative to its reference / starting
-      point. So -10 in SWABS_Changes or GWABS_Changes means reduce an impact by 10 Ml/d
-      to get to the solution found by the Optimiser.
+    - Required abstraction impact changes in SWABS_Changes or GWABS_Changes (an
+      Optimiser output) are given as negative to indicate that an impact needs to be
+      reduced relative to its reference / starting point. So -10 in these tables means
+      reduce an impact by 10 Ml/d to get to the solution found by the Optimiser.
+    - Required impact changes in SupResGW_Changes are positive numbers. These numbers
+      indicate either an increase in reservoir compensation flow or a required
+      *reduction* in a complex abstraction, depending on the nature of the table row.
+      The sign convention for complex abstraction changes is thus different to
+      that in SWABS_Changes and GWABS_Changes.
 
 WRGIS Table Fields
 ------------------
@@ -82,7 +87,8 @@ GWABs_NBB
     - WB_4TH_PRO: *Percentage of total impact received by WB_4TH [%]*
     - WB_5TH_PRO: *Percentage of total impact received by WB_5TH [%]*
     - GWQ{P}{S}WR: *Total abstraction impact at flow percentile {P} under scenario {S}
-      [Ml/d]*
+      (accounting for local consumptiveness) [Ml/d]*
+    - LICN_EXPD: Licence expiry date or flag (D for deregulated)
     - LICNUMBER: *Licence number*
     - SITENAME: *Site name*
     - PURPCODE: *Abstraction purpose code*
@@ -116,7 +122,7 @@ SWABS_NBB
     - UNIQUEID: *Unique ID (index column)*
     - EA_WB_ID: *Impacted waterbody ID*
     - SWQ{P}{S}WR: *Total abstraction impact at flow percentile {P} under scenario {S}
-      [Ml/d]*
+      (accounting for local consumptiveness) [Ml/d]*
     - HOFMLD: *Hands-off flow (in HOFWBID) at which abstraction impact ceases [Ml/d]*
     - HOFWBID: *ID of waterbody that defines hands-off flow for this abstraction*
     - LICNUMBER: *Licence number*
@@ -135,6 +141,7 @@ SWABS_NBB
     - SW_LAKE3: *As SW_LAKE1 but for lake 3*
     - SW_LAKE4: *As SW_LAKE1 but for lake 4*
     - SW_LAKE5: *As SW_LAKE1 but for lake 5*
+    - LICN_EXPD: Licence expiry date or flag (D for deregulated)
 
 Derived Table Fields
 --------------------
@@ -159,21 +166,27 @@ Master
 
 .. note::
 
-    The Optimiser output tables SWABS_Changes and GWABS_Changes list the impact
-    reductions required relative to a reference (typically the input / starting point).
-    These tables follow the format of SWABS_NBB and GWABs_NBB, respectively, except
-    their value columns represent impact changes, rather than impacts themselves.
-    Negative values in these tables of changes indicate that an impact is reduced.
+    The Optimiser output tables SWABS_Changes, GWABS_Changes and SupResGW_Changes list
+    the impact changes required relative to a reference (typically the input / starting
+    point). These tables follow the format of SWABS_NBB, GWABs_NBB and SupResGW_NBB,
+    respectively, except their value columns represent impact changes, rather than
+    impacts themselves. See above for sign conventions.
 
 Optimiser Required Fields
 -------------------------
 
-As noted in :doc:`tutorial`, some extra columns are needed in certain ``Dataset`` tables
-before the Optimiser can be run:
+As noted in the :doc:`tutorial`, some extra columns are needed in certain ``Dataset``
+tables before the Optimiser can be run:
 
-    - SWABS_NBB and GWABs_NBB require an additional (boolean) field called
-      Optimise_Flag . This field indicates whether a given abstraction should be
-      included (1) or excluded (0) from the optimisation process.
     - The Master table requires a flow target column(s) of the form QT{S}Q{P}
       (for a scenario {S} and a percentile {P}). This is typically set by
       ``Dataset.set_flow_targets``.
+    - SWABS_NBB, GWABs_NBB and SupResGW_NBB require an additional field called
+      Optimise_Flag . For the former two tables, this field indicates whether a given
+      abstraction should be included (1) or excluded (0) from the optimisation process.
+      Things are slightly more complicated for SupResGW_NBB, as explained in the
+      :doc:`tutorial`. Defaults for the flag field can be set with the
+      ``Dataset.set_optimise_flag`` method.
+    - If any reservoir compensation flow increases are to be considered in the
+      optimisation, an additional field specifying the maximum permitted increase is
+      required. This should take the form SUP{S}Q{P}_MAX_INCREASE .
