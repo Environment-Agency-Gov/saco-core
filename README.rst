@@ -27,12 +27,15 @@ Note that:
     - The ``-e`` flag is optional (for installing the package in editable/developer
       mode).
 
-Documentation and Examples
---------------------------
+Documentation
+-------------
 
 Package `documentation`_ is available that explains the core features of the tool and
-how it might be used. The documentation also provides a reference for the main
-classes/functions in the package.
+how it might be used. The documentation includes a tutorial page, as well as a
+reference for the data structure and the main classes/functions in the package.
+
+Examples
+--------
 
 Jupyter notebook examples are available in the examples folder of the repository. It is
 worth looking at the documentation before/alongside the code examples.
@@ -53,22 +56,18 @@ Licence and Disclaimer
 ----------------------
 
 The SACO tool is released under the `Open Government Licence (OGL)`_ and is intended to
-be developed in an open and collaborative manner.
-
-The SACO tool is designed to evolve through community contributions. All contributions
-to development are deemed to be licensed under the same terms.
+be developed in an open and collaborative manner. All contributions to development are
+deemed to be licensed under the same terms.
 
 The SACO tool is provided “as is”, without warranty of any kind, express or implied,
 including but not limited to warranties of merchantability or fitness for a particular
-purpose.
-
-Use of the SACO tool is at your own risk. The Environment Agency accepts no liability
-for any loss, damage, or claims arising from its use.
+purpose. Use of the SACO tool is at your own risk. The Environment Agency accepts no
+liability for any loss, damage, or claims arising from its use.
 
 The SACO tool may be updated, modified, or replaced at any time. Older versions may
 cease to be available. Users who already hold a version may continue to use it under
 the licence, but there is no guarantee that future versions will retain compatibility,
-features, or functionality.
+features, or functionality. Users should check for updated versions.
 
 The release of the SACO tool does not imply any obligation on the part of the
 Environment Agency to provide maintenance, support, or continued availability.
