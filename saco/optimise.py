@@ -353,6 +353,7 @@ class Optimiser:
         dfs = find_differences(
             reference_dataset, self.output_dataset, table_names=table_names,
             require_rows_match=False, require_columns_match=False,
+            significance_threshold=1e-6,
         )
 
         # Remove value columns that are all nans (i.e. scenario/percentile combinations

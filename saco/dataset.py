@@ -1076,6 +1076,7 @@ def concatenate_datasets(
 def find_differences(
         ds1: Dataset, ds2: Dataset, table_names: List[str],
         require_rows_match: bool = True, require_columns_match: bool = True,
+        significance_threshold: float | None = None,
 ) -> Dict[str, pd.DataFrame]:
     """
     Calculate differences between data tables of two Dataset instances.
@@ -1096,6 +1097,9 @@ def find_differences(
             (indexes) (ignoring order).
         require_columns_match: Whether data tables should match completely on columns
             (ignoring order).
+        significance_threshold: If absolute differences are below this threshold then
+            they will be set to zero (to avoid spurious precision in outputs). By
+            default no changes are made.
 
     Returns:
         Dictionary with keys as table names and values as dataframes whose value
@@ -1131,6 +1135,14 @@ def find_differences(
         )
         for value_col in ds2.get_table(table_name).value_columns:
             df3[value_col] -= df3[f'{value_col}__REF']
+
+            if significance_threshold is not None:
+                df3[value_col] = np.where(
+                    np.abs(df3[value_col]) < significance_threshold,
+                    0.0,
+                    df3[value_col]
+                )
+
         cols_to_drop = [col for col in df3.columns if col.endswith('__REF')]
         df3 = df3.drop(columns=cols_to_drop)
 
