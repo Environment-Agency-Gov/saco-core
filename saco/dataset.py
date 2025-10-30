@@ -612,7 +612,7 @@ class Dataset:
             df['__COMPLIANT'] = df[efi_col]
             f1 = self.constants.compliance_bin_edges[2]
             df['__BAND1'] = df[efi_col] + f1 * df[qnat_col]
-            f2 = self.constants.compliance_bin_edges[3]
+            f2 = self.constants.compliance_bin_edges[1]
             df['__BAND2'] = df[efi_col] + f2 * df[qnat_col]
             df['__BAND3'] = 0.0
 
