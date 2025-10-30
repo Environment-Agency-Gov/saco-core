@@ -1,0 +1,257 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculator &mdash; saco  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Optimiser" href="optimiser.html" />
+    <link rel="prev" title="Data" href="data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            saco
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Background:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Calculator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#terminology">Terminology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logic">Logic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#capping">Capping</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="optimiser.html">Optimiser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fields.html">Table Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-dataset.html">Dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-calculate.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-optimise.html">Optimiser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">saco</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Calculator</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/calculator.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="calculator">
+<h1>Calculator<a class="headerlink" href="#calculator" title="Link to this heading"></a></h1>
+<p>The Calculator finds the impact of a given set of artificial influences on scenario
+flows. These scenario flows are then used to identify surpluses/deficits and compliance
+relative to flow targets.</p>
+<p>The set of artificial influences used in the Calculator could take a couple of forms:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Artificial influences could be taken directly from the “base” WRGIS.</p></li>
+<li><p>A modified, alternative or new set of artificial influences could be used. These
+influences might include user-prescribed changes/overrides compared with the
+“base” WRGIS.</p></li>
+</ul>
+</div></blockquote>
+<p>It is anticipated that the Calculator will primarily be used to evaluate the latter of
+these two cases. Scenario flows, surpluses/deficits and compliance classifications in
+the former case are an output from the “upstream” WRGIS toolset and available in the
+WRGIS database.</p>
+<p>The Calculator is based on a programmatic implementation of the “Waterbody Abstraction
+Tool” (WBAT) Excel workbook. The WBAT is a faster way to examine the effects of
+artificial influence changes compared with rerunning the full WRGIS toolset code. See
+below for further details of the relationship between the core logic of the WRGIS
+toolset, the WBAT and the SACO Calculator.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Calculator uses WRGIS abstraction impact fields that already account for (local)
+consumptiveness. This should be remembered if abstraction impacts are modified.</p>
+</div>
+<section id="terminology">
+<h2>Terminology<a class="headerlink" href="#terminology" title="Link to this heading"></a></h2>
+<p>We follow WRGIS use of “sub” and “ups” terminology. “sub” refers to just the current
+waterbody, whereas “ups” refers to sums for the current waterbody and all waterbodies
+upstream of it. So, taking natural flow as an example, “sub” represents runoff
+generated within the waterbody itself. Conversely, “ups” represents the “actual”
+outflow from the waterbody (including all of the area upstream of the waterbody
+outlet).</p>
+</section>
+<section id="logic">
+<h2>Logic<a class="headerlink" href="#logic" title="Link to this heading"></a></h2>
+<p>The starting point for the Calculator is a dataset that contains the tables described
+in <a class="reference internal" href="data.html"><span class="doc">Data</span></a>. As noted above, the artificial influences tables may contain changes
+relative to the “base” WRGIS tables.</p>
+<p>From this point, the Calculator follows a few steps to arrive at scenario flows,
+surpluses/deficits and compliance classifications:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Aggregate the updated artificial influences (point) tables to waterbody-level
+(first “sub” and then “ups”, using the routing matrix).</p></li>
+<li><p>Apply the “ups” impacts to the natural (“ups”) flows to derive updated
+scenario flows (also “ups”) for each waterbody. The tool also identifies the
+consistent “sub” scenario flows for reference.</p></li>
+<li><p>Calculate updated surplus/deficit numbers for each waterbody as the new scenario
+flow minus the EFI. If an alternative flow target table/column has been
+specified then surplus/deficit relative to this target can also be calculated at
+the same time.</p></li>
+<li><p>Identify the compliance band associated with the new scenario flow. The band is
+obtained by dividing the surplus/deficit (relative to the EFI) by the natural
+flow (“ups”) and then comparing this quantity with the band definitions in the
+table below.</p></li>
+</ol>
+</div></blockquote>
+<p><em>Compliance band definitions based on deficit (D) and natural flow (Qn)</em></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Band</p></th>
+<th class="head"><p>Definition</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Compliant</p></td>
+<td><p>D / Qn &gt;= 0</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>-0.25 &lt;= D / Qn &lt; 0</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>-0.5 &lt;= D / Qn &lt; -0.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>D / Qn &lt; -0.5</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Waterbodies with natural flows of zero are set as “compliant”. Selected waterbody
+types are not evaluated for compliance: ‘Seaward Transitional’ and ‘Saline Lagoon’.</p>
+</div>
+<p>The core of the Calculator thus follows the simple routed (instantaneous) water balance
+approach of WRGIS noted in <a class="reference internal" href="data.html"><span class="doc">Data</span></a>. I.e. scenario flows are essentially the result
+of subtracting abstractions and adding discharges to natural flows, while ensuring that
+impacts upstream are propagated to downstream waterbodies. The primary output from the
+Calculator is a “Master” table - indexed by waterbody - that provides all water balance
+terms, surpluses/deficits and compliance bands.</p>
+</section>
+<section id="capping">
+<h2>Capping<a class="headerlink" href="#capping" title="Link to this heading"></a></h2>
+<p>One question relevant to the WRGIS toolset, the WBAT and the SACO Calculator concerns
+the impacts on flows downstream of a waterbody in which the “prescribed” impact
+(according to the artificial influences tables) cannot be met. For example, say a
+waterbody has a scenario flow of 10 Ml/d coming in from upstream (i.e. after all
+artificial influences <em>upstream</em> of the waterbody are taken into account). Say then that
+the impact of artificial influences inside that waterbody (“sub”) in a given scenario
+is prescribed as -15 Ml/d. Say also that the waterbody does not generate any runoff
+inside its area. The net impact (abstraction) therefore exceeds the available flow by
+5 Ml/d.</p>
+<p>In this example, the WBAT would effectively take the available 10 Ml/d, giving a
+scenario flow of zero for the waterbody. However, it would also then propagate a -15
+Ml/d impact to downstream waterbodies, which would be subtracted from available flows
+if possible (i.e. up to the limit of the available flow in the downstream waterbodies).
+In contrast, the WRGIS toolset would limit the net impact propagated to downstream
+waterbodies to -10 Ml/d. I.e. the impact would be “capped” to what can actually be
+taken in the waterbody in question.</p>
+<p>The WBAT works in this way partly because “capping” would be harder to implement in
+Excel. It might be expected that the WBAT provides slightly more conservative results
+than WRGIS where cases of “capping” arise in WRGIS. This is a situation that does
+occur with non-negligible frequency in the base WRGIS (and higher frequency in the
+fully licensed abstraction scenario).</p>
+<p>In the SACO Calculator we have provided options to follow both the WBAT approach and a
+WRGIS-like approach to this situation. The latter approach is the default and involves
+capping net impacts at the waterbody scale, rather than adjusting individual artificial
+influences at the point scale. An upstream-to-downstream loop adjusts net impacts by
+the minimum amount needed to ensure that scenario flows do not become negative. We
+adopt this approach to emulate the WRGIS toolset calculations as far as possible, but
+an alternative could involve using a network flow model to solve for all flows and
+feasible impacts directly.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If capping has been applied to avoid propagation of unfeasible impacts, scenario
+flows output from the Calculator may be larger than initially expected from
+performing a simple “ups” water balance calculation for some waterbodies. This is
+because capping reduced net impacts upstream to retain physical plausibility.</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="data.html" class="btn btn-neutral float-left" title="Data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="optimiser.html" class="btn btn-neutral float-right" title="Optimiser" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Environment Agency.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

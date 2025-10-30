@@ -1,0 +1,6 @@
+﻿saco.Dataset.set\_tables
+========================
+
+.. currentmodule:: saco
+
+.. automethod:: Dataset.set_tables

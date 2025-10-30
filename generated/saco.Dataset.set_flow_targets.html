@@ -1,0 +1,183 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>saco.Dataset.set_flow_targets &mdash; saco  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="saco.Dataset.set_optimise_flag" href="saco.Dataset.set_optimise_flag.html" />
+    <link rel="prev" title="saco.Dataset.load_data" href="saco.Dataset.load_data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            saco
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Background:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../calculator.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../optimiser.html">Optimiser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../fields.html">Table Fields</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../reference-dataset.html">Dataset</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../reference-dataset.html#saco.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="saco.Dataset.find_outlet_waterbodies.html">saco.Dataset.find_outlet_waterbodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saco.Dataset.identify_upstream_waterbodies.html">saco.Dataset.identify_upstream_waterbodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saco.Dataset.load_data.html">saco.Dataset.load_data</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">saco.Dataset.set_flow_targets</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.set_flow_targets"><code class="docutils literal notranslate"><span class="pre">Dataset.set_flow_targets()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="saco.Dataset.set_optimise_flag.html">saco.Dataset.set_optimise_flag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saco.Dataset.set_tables.html">saco.Dataset.set_tables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saco.Dataset.write_tables.html">saco.Dataset.write_tables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference-calculate.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference-optimise.html">Optimiser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">saco</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../reference-dataset.html">Dataset</a></li>
+      <li class="breadcrumb-item active">saco.Dataset.set_flow_targets</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/saco.Dataset.set_flow_targets.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="saco-dataset-set-flow-targets">
+<h1>saco.Dataset.set_flow_targets<a class="headerlink" href="#saco-dataset-set-flow-targets" title="Link to this heading"></a></h1>
+<dl class="py method">
+<dt class="sig sig-object py" id="saco.Dataset.set_flow_targets">
+<span class="sig-prename descclassname"><span class="pre">Dataset.</span></span><span class="sig-name descname"><span class="pre">set_flow_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overall_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'compliant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_existing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saco.Dataset.set_flow_targets" title="Link to this definition"></a></dt>
+<dd><p>Set flow target columns in Master table (in <em>Dataset.mt.data</em> attribute).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>overall_target</strong> – Overall flow target to use for all waterbodies (which can
+be overridden by custom_targets and/or df arguments. See notes below for
+valid arguments.</p></li>
+<li><p><strong>custom_targets</strong> – For overriding overall_target for specific waterbodies. See
+discussion/example below for a guide to formulating this dictionary.</p></li>
+<li><p><strong>overwrite_existing</strong> – Whether to overwrite any flow target columns that
+already exist in the dataframe. If False (default) then overall_target
+and custom_targets will not be used to overwrite existing flow target
+columns. However, if df is not None, it will be used regardless of
+overwrite_existing value.</p></li>
+<li><p><strong>df</strong> – Dataframe indexed by waterbody and containing any flow target columns
+that should be given priority (Ml/d). It does not need to contain all
+waterbodies in the domain/dataset. Used regardless of
+overwrite_existing.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Valid arguments for overall_target are: ‘compliant’, ‘band-1’, ‘band-2’,
+‘band-3’, ‘none’ and ‘no-det’. The first four options refer to compliance
+bands (relative to the EFI). In each case, the target is the minimum flow
+needed to achieve the band (i.e. the lower bound/edge of the band). ‘none’
+and ‘band-3’ are aliases (i.e. no flow target / trivial target of zero).</p>
+<p>The final option (‘no-det’) stands for “no deterioration” of compliance
+band between the RA and FL scenarios. Again, this is translated into the
+minimum flow required to meet this condition, i.e. the lower bound of the
+appropriate band. Note that this is not the same as no change between the
+RA and FL scenario flows (which could be implemented by passing an
+appropriate dataframe via the df argument).</p>
+<p>The custom_targets argument can be used to override the overall_target for
+specific waterbodies. It should be provided as a dictionary of dictionaries,
+as per the following example:
+<code class="docutils literal notranslate"><span class="pre">{('FL',</span> <span class="pre">95):</span> <span class="pre">{'band-1':</span> <span class="pre">['waterbody-id-1',</span> <span class="pre">'waterbody-id-2',</span> <span class="pre">...]}}</span></code>.</p>
+<p>Finally, a dataframe of flow targets for one or more waterbodies can also be
+supplied through the df argument. This is given priority and it will also be
+used regardless of the overwrite_existing argument (currently). This
+dataframe should have waterbody ID as its index (with name EA_WB_ID) and
+one or more flow target columns (in Ml/d) whose names follow
+<code class="docutils literal notranslate"><span class="pre">f'QT{S}Q{P}'</span></code>, where <code class="docutils literal notranslate"><span class="pre">S</span></code> is a scenario name and <code class="docutils literal notranslate"><span class="pre">P</span></code> is a flow
+percentile.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="saco.Dataset.load_data.html" class="btn btn-neutral float-left" title="saco.Dataset.load_data" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="saco.Dataset.set_optimise_flag.html" class="btn btn-neutral float-right" title="saco.Dataset.set_optimise_flag" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Environment Agency.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

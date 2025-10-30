@@ -1,0 +1,6 @@
+﻿saco.Calculator.run
+===================
+
+.. currentmodule:: saco
+
+.. automethod:: Calculator.run

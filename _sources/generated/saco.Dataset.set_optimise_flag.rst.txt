@@ -1,0 +1,6 @@
+﻿saco.Dataset.set\_optimise\_flag
+================================
+
+.. currentmodule:: saco
+
+.. automethod:: Dataset.set_optimise_flag

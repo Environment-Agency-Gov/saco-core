@@ -1,0 +1,6 @@
+﻿saco.Optimiser.run
+==================
+
+.. currentmodule:: saco
+
+.. automethod:: Optimiser.run

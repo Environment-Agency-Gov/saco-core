@@ -1,0 +1,334 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Table Fields &mdash; saco  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Dataset" href="reference-dataset.html" />
+    <link rel="prev" title="Tutorial" href="tutorial.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            saco
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Background:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calculator.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimiser.html">Optimiser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Table Fields</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sign-conventions">Sign Conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#wrgis-table-fields">WRGIS Table Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#derived-table-fields">Derived Table Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optimiser-required-fields">Optimiser Required Fields</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference-dataset.html">Dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-calculate.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-optimise.html">Optimiser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">saco</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Table Fields</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fields.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="table-fields">
+<h1>Table Fields<a class="headerlink" href="#table-fields" title="Link to this heading"></a></h1>
+<p>Here we summarise the table fields/columns typically used in SACO inputs and outputs.
+Most of the tables are from WRGIS and follow its formatting/naming conventions. The
+small number of non-WRGIS tables used as input/output for the tool are also included
+here. See <a class="reference internal" href="data.html"><span class="doc">Data</span></a> for a more general overview of the tables.</p>
+<p>Several WRGIS tables use a “wide” table structure, in which multiple value columns are
+present (rather than say a single value column but multiple “factor” columns). We use
+the following substitutions in the field names presented below:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>{P}: flow percentile (natural) {95, 70, 50, 30}</p></li>
+<li><p>{S}: artificial influences scenario {RA, FL, FP}</p></li>
+<li><p>{agg}: type of aggregation for a waterbody-scale quantity {sub, ups}</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In WRGIS, “sub” and “ups” suffixes are used in relation to some waterbody-scale
+quantities. Using flow as an example, an “ups” number indicates total flow at the
+waterbody outlet, i.e. including all upstream contributing area. A “sub” number
+refers only to flow generated within the waterbody in question (so something like
+locally generated runoff). Artificial influence impacts can be given as either
+“ups” or “sub” numbers too.</p>
+</div>
+<section id="sign-conventions">
+<h2>Sign Conventions<a class="headerlink" href="#sign-conventions" title="Link to this heading"></a></h2>
+<p>Note the following sign conventions used in the various tables:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Abstraction impacts (i.e. acting to decrease flows) are entered as positive in
+SWABS_NBB and GWABs_NBB (and in the groundwater and surface water abstraction
+columns of the Master table).</p></li>
+<li><p>Discharge impacts (i.e. acting to increase flows) are entered as positive in
+Discharges_NBB (and in the discharge columns of the Master table).</p></li>
+<li><p>Complex impacts in SupResGW_NBB are positive if representing a discharge (or
+other impact increasing flows) and negative if representing an abstraction (or
+other impact decreasing flows). This is also the case for the net complex impact
+terms in the Master table.</p></li>
+<li><p>Required abstraction impact changes in SWABS_Changes or GWABS_Changes (an
+Optimiser output) are given as negative to indicate that an impact needs to be
+reduced relative to its reference / starting point. So -10 in these tables means
+reduce an impact by 10 Ml/d to get to the solution found by the Optimiser.</p></li>
+<li><p>Required impact changes in SupResGW_Changes are positive numbers. These numbers
+indicate either an increase in reservoir compensation flow or a required
+<em>reduction</em> in a complex abstraction, depending on the nature of the table row.
+The sign convention for complex abstraction changes is thus different to
+that in SWABS_Changes and GWABS_Changes.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="wrgis-table-fields">
+<h2>WRGIS Table Fields<a class="headerlink" href="#wrgis-table-fields" title="Link to this heading"></a></h2>
+<p>Where relevant, units are indicated in square brackets. “[-]” indicates a dimensionless
+or fractional quantity. Columns that are used as dataframe indexes in SACO are also
+indicated.</p>
+<dl class="simple">
+<dt>AbsSensBands_NBB</dt><dd><ul class="simple">
+<li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
+<li><p>ASBFinal: <em>Abstraction sensitivity band (per waterbody)</em></p></li>
+</ul>
+</dd>
+<dt>ASBPercentages</dt><dd><ul class="simple">
+<li><p>QFLOW: <em>Flow percentile (natural) (index column)</em></p></li>
+<li><p>ASB: <em>Abstraction sensitivity band (index column)</em></p></li>
+<li><p>PERCENT_: <em>Fractional permitted deviation from natural flow [-]</em></p></li>
+</ul>
+</dd>
+<dt>Discharges_NBB</dt><dd><ul class="simple">
+<li><p>UNID: <em>Unique ID (index column)</em></p></li>
+<li><p>DISCHRA: <em>Discharge impact under RA scenario [Ml/d]</em></p></li>
+<li><p>DISCHFL: <em>Discharge impact under FL scenario [Ml/d]</em></p></li>
+<li><p>DISCHFP: <em>Discharge impact under FP scenario [Ml/d]</em></p></li>
+<li><p>EA_WB_ID: <em>Impacted waterbody ID</em></p></li>
+<li><p>DISNUMBER: <em>Consent number</em></p></li>
+<li><p>SITENAME: <em>Site name</em></p></li>
+<li><p>CONSHOLDER: <em>Consent holder name</em></p></li>
+</ul>
+</dd>
+<dt>GWABs_NBB</dt><dd><ul class="simple">
+<li><p>UNIQUEID: <em>Unique ID (index column)</em></p></li>
+<li><p>EA_WB_ID: <em>ID of waterbody containing impact point</em></p></li>
+<li><p>WB_1ST: <em>First waterbody receiving impact</em></p></li>
+<li><p>WB_2ND: <em>Second waterbody receiving impact</em></p></li>
+<li><p>WB_3RD: <em>Third waterbody receiving impact</em></p></li>
+<li><p>WB_4TH: <em>Fourth waterbody receiving impact</em></p></li>
+<li><p>WB_5TH: <em>Fifth waterbody receiving impact</em></p></li>
+<li><p>WB_1ST_PRO: <em>Percentage of total impact received by WB_1ST [%]</em></p></li>
+<li><p>WB_2ND_PRO: <em>Percentage of total impact received by WB_2ND [%]</em></p></li>
+<li><p>WB_3RD_PRO: <em>Percentage of total impact received by WB_3RD [%]</em></p></li>
+<li><p>WB_4TH_PRO: <em>Percentage of total impact received by WB_4TH [%]</em></p></li>
+<li><p>WB_5TH_PRO: <em>Percentage of total impact received by WB_5TH [%]</em></p></li>
+<li><p>GWQ{P}{S}WR: <em>Total abstraction impact at flow percentile {P} under scenario {S}
+(accounting for local consumptiveness) [Ml/d]</em></p></li>
+<li><p>LICN_EXPD: Licence expiry date or flag (D for deregulated)</p></li>
+<li><p>LICNUMBER: <em>Licence number</em></p></li>
+<li><p>SITENAME: <em>Site name</em></p></li>
+<li><p>PURPCODE: <em>Abstraction purpose code</em></p></li>
+<li><p>LICHOLDER: <em>Licence holder</em></p></li>
+<li><p>FLPTPANQM3: <em>Point-purpose annual quantity under FL scenario [m^3]</em></p></li>
+<li><p>RAPTPANQM3: <em>Point-purpose annual quantity under RA scenario [m^3]</em></p></li>
+<li><p>GWPROPCONS: <em>Abstraction consumptiveness [-]</em></p></li>
+<li><p>IMPFAC: <em>Factor/flag used in seasonal apportionment of impacts</em></p></li>
+</ul>
+</dd>
+<dt>IntegratedWBs_NBB</dt><dd><ul class="simple">
+<li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
+<li><p>DSTREAM_WB: <em>ID of next waterbody (downstream)</em></p></li>
+<li><p>Type_IWB: <em>Waterbody type</em></p></li>
+<li><p>RBD_NAME: <em>River basin district name</em></p></li>
+</ul>
+</dd>
+<dt>QNaturalFlows_NBB</dt><dd><ul class="simple">
+<li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
+<li><p>QN{P}sub: <em>Natural flow (sub) at percentile {P} [Ml/d]</em></p></li>
+<li><p>QN{P}ups: <em>Natural flow (ups) at percentile {P} [Ml/d]</em></p></li>
+</ul>
+</dd>
+<dt>SupResGW_NBB</dt><dd><ul class="simple">
+<li><p>UNID: <em>Unique ID (index column)</em></p></li>
+<li><p>PURPOSE: <em>Impact purpose</em></p></li>
+<li><p>EA_WB_ID: <em>Impacted waterbody ID</em></p></li>
+<li><p>SUP{S}Q{P}: <em>Impact at flow percentile {P} under scenario {S} [Ml/d]</em></p></li>
+<li><p>NAME: <em>Impact name</em></p></li>
+<li><p>OPERATOR: <em>Operator name</em></p></li>
+<li><p>TYPE_SUPRESGW: <em>Complex impact type</em></p></li>
+</ul>
+</dd>
+<dt>SWABS_NBB</dt><dd><ul class="simple">
+<li><p>UNIQUEID: <em>Unique ID (index column)</em></p></li>
+<li><p>EA_WB_ID: <em>Impacted waterbody ID</em></p></li>
+<li><p>SWQ{P}{S}WR: <em>Total abstraction impact at flow percentile {P} under scenario {S}
+(accounting for local consumptiveness) [Ml/d]</em></p></li>
+<li><p>HOFMLD: <em>Hands-off flow (in HOFWBID) at which abstraction impact ceases [Ml/d]</em></p></li>
+<li><p>HOFWBID: <em>ID of waterbody that defines hands-off flow for this abstraction</em></p></li>
+<li><p>LICNUMBER: <em>Licence number</em></p></li>
+<li><p>SITENAME: <em>Site name</em></p></li>
+<li><p>PURPCODE: <em>Abstraction purpose code</em></p></li>
+<li><p>LICHOLDER: <em>Licence holder name</em></p></li>
+<li><p>FLPTPANQM3: <em>Point-purpose annual quantity under FL scenario [m^3]</em></p></li>
+<li><p>RAPTPANQM3: <em>Point-purpose annual quantity under RA scenario [m^3]</em></p></li>
+<li><p>SWPROPCONS: <em>Abstraction consumptiveness [-]</em></p></li>
+<li><p>RESRVRFLAG: <em>Flag indicating whether abstraction associated with reservoir</em></p></li>
+<li><p>SW_LDMU_NO: <em>Flag indicating whether abstraction associated with level-dependent
+management unit</em></p></li>
+<li><p>SW_LAKE1: <em>Flag indicating whether abstraction associated with lake 1 (refers to
+ledger numbering)</em></p></li>
+<li><p>SW_LAKE2: <em>As SW_LAKE1 but for lake 2</em></p></li>
+<li><p>SW_LAKE3: <em>As SW_LAKE1 but for lake 3</em></p></li>
+<li><p>SW_LAKE4: <em>As SW_LAKE1 but for lake 4</em></p></li>
+<li><p>SW_LAKE5: <em>As SW_LAKE1 but for lake 5</em></p></li>
+<li><p>LICN_EXPD: Licence expiry date or flag (D for deregulated)</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="derived-table-fields">
+<h2>Derived Table Fields<a class="headerlink" href="#derived-table-fields" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>EFI</dt><dd><ul class="simple">
+<li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
+<li><p>EFIQ{P}: <em>Environmental flow indicator at flow percentile {P} [Ml/d]</em></p></li>
+</ul>
+</dd>
+<dt>Master</dt><dd><ul class="simple">
+<li><p>COMP{S}Q{P}: <em>Compliance band (0 = compliant, 1/2/3 = band 1/2/3, -999 = unassessed
+due to type)</em></p></li>
+<li><p>DISCH{S}{agg}: <em>Discharge impacts [Ml/d]</em></p></li>
+<li><p>EFIQ{P}: <em>Environmental flow indicator [Ml/d]</em></p></li>
+<li><p>GW{S}Q{P}{agg}: <em>Groundwater abstraction impacts [Ml/d]</em></p></li>
+<li><p>QN{P}{agg}: <em>Natural flow[Ml/d]</em></p></li>
+<li><p>QT{S}Q{P}: <em>Flow target (which may differ from EFI) [Ml/d]</em></p></li>
+<li><p>SCEN{S}Q{P}{agg}: <em>Scenario flow (i.e. impacted/denaturalised) [Ml/d]</em></p></li>
+<li><p>SD{S}Q{P}: <em>Surplus/deficit relative to EFI [Ml/d]</em></p></li>
+<li><p>SDT{S}Q{P}: <em>Surplus/deficit relative to target flow (i.e. QT{S}Q{P}) [Ml/d]</em></p></li>
+<li><p>SUP{S}Q{P}{agg}: <em>Complex impacts [Ml/d]</em></p></li>
+<li><p>SW{S}Q{P}{agg}: <em>Surface water abstraction impacts [Ml/d]</em></p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Optimiser output tables SWABS_Changes, GWABS_Changes and SupResGW_Changes list
+the impact changes required relative to a reference (typically the input / starting
+point). These tables follow the format of SWABS_NBB, GWABs_NBB and SupResGW_NBB,
+respectively, except their value columns represent impact changes, rather than
+impacts themselves. See above for sign conventions.</p>
+</div>
+</section>
+<section id="optimiser-required-fields">
+<h2>Optimiser Required Fields<a class="headerlink" href="#optimiser-required-fields" title="Link to this heading"></a></h2>
+<p>As noted in the <a class="reference internal" href="tutorial.html"><span class="doc">Tutorial</span></a>, some extra columns are needed in certain <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>
+tables before the Optimiser can be run:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The Master table requires a flow target column(s) of the form QT{S}Q{P}
+(for a scenario {S} and a percentile {P}). This is typically set by
+<code class="docutils literal notranslate"><span class="pre">Dataset.set_flow_targets</span></code>.</p></li>
+<li><p>SWABS_NBB, GWABs_NBB and SupResGW_NBB require an additional field called
+Optimise_Flag . For the former two tables, this field indicates whether a given
+abstraction should be included (1) or excluded (0) from the optimisation process.
+Things are slightly more complicated for SupResGW_NBB, as explained in the
+<a class="reference internal" href="tutorial.html"><span class="doc">Tutorial</span></a>. Defaults for the flag field can be set with the
+<code class="docutils literal notranslate"><span class="pre">Dataset.set_optimise_flag</span></code> method.</p></li>
+<li><p>If any reservoir compensation flow increases are to be considered in the
+optimisation, an additional field specifying the maximum permitted increase is
+required. This should take the form SUP{S}Q{P}_MAX_INCREASE .</p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tutorial.html" class="btn btn-neutral float-left" title="Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reference-dataset.html" class="btn btn-neutral float-right" title="Dataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Environment Agency.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,315 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data &mdash; saco  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Calculator" href="calculator.html" />
+    <link rel="prev" title="Overview" href="overview.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            saco
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Background:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#wrgis">WRGIS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tables">Tables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conceptualisation">Conceptualisation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#limitations">Limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#processing">Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#further-details">Further Details</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="calculator.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimiser.html">Optimiser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="fields.html">Table Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-dataset.html">Dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-calculate.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-optimise.html">Optimiser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">saco</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Data</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/data.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data">
+<h1>Data<a class="headerlink" href="#data" title="Link to this heading"></a></h1>
+<p>The SACO tool is based around the Water Resources GIS (WRGIS) conceptualisation and
+tables. Here we provide some further background on WRGIS and its use in the SACO tool.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>WRGIS data <em>may</em> be made available under licence following a data request to the
+Environment Agency. Please contact <a class="reference external" href="mailto:sustainable&#46;abstraction&#37;&#52;&#48;environment-agency&#46;gov&#46;uk">sustainable<span>&#46;</span>abstraction<span>&#64;</span>environment-agency<span>&#46;</span>gov<span>&#46;</span>uk</a>
+for further information.</p>
+</div>
+<section id="wrgis">
+<h2>WRGIS<a class="headerlink" href="#wrgis" title="Link to this heading"></a></h2>
+<p>WRGIS summarises information on natural flows and the impacts of artificial influences
+on these natural flows. WRGIS provides this information for selected percentiles of the
+flow duration curve (FDC) for all Water Framework Directive (WFD) surface waterbodies
+in England. These percentiles are (lowest flow to highest flow): 95, 70, 50, 30.
+The WRGIS database does not contain time series information.</p>
+<p>Impacts are provided for three artificial influence scenarios, which may be broadly
+defined as:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Recent actual: mean impacts over a recent ~6-year period</p></li>
+<li><p>Fully licensed: hypothetical impacts if all abstractions were to take place at
+their maximum rates (according to licence conditions)</p></li>
+<li><p>Future predicted: recent actual impacts multiplied by a growth factor to estimate
+potential changes</p></li>
+</ul>
+</div></blockquote>
+<p>Artificial influences are primarily surface water abstractions, groundwater
+abstractions, and (surface water) discharges. However, a fourth class of “complex”
+influences is also delineated in WRGIS. One example of a complex impact might be the
+impounding effect of a reservoir on a natural flow regime. This impact does not
+necessarily fall easily into the simpler categories of abstractions and discharges.
+More discussion on this class of influences is given below.</p>
+<p>WRGIS is constructed by a set of tools that process information from the Catchment
+Management Strategy (CAMS) “ledgers”. These ledgers describe the impacts of artificial
+influences on the FDC at so-called CAMS Assessment Points (APs). The WRGIS tools
+translate the information on natural flows and artificial influences from the ledgers
+to the WFD waterbody scale. This processing results in a (geo)database. When referring
+to WRGIS throughout the SACO package/documentation, we are referring to the database
+rather than the processing toolset.</p>
+<section id="tables">
+<h3>Tables<a class="headerlink" href="#tables" title="Link to this heading"></a></h3>
+<p>The data tables in the WRGIS database that are relevant to the SACO tool are listed in
+the summary table below:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Table Name</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>IntegratedWBs_NBB</p></td>
+<td><p>Defines waterbody network and waterbody properties</p></td>
+</tr>
+<tr class="row-odd"><td><p>QNaturalFlows_NBB</p></td>
+<td><p>Natural flows per waterbody</p></td>
+</tr>
+<tr class="row-even"><td><p>AbsSensBands_NBB</p></td>
+<td><p>Abstraction sensitivity bands (ASBs) per waterbody</p></td>
+</tr>
+<tr class="row-odd"><td><p>ASBPercentages</p></td>
+<td><p>Permitted deviations (fractional) from natural flow by ASB
+and flow percentile</p></td>
+</tr>
+<tr class="row-even"><td><p>SWABS_NBB</p></td>
+<td><p>Surface water abstractions</p></td>
+</tr>
+<tr class="row-odd"><td><p>GWABs_NBB</p></td>
+<td><p>Groundwater abstractions</p></td>
+</tr>
+<tr class="row-even"><td><p>Discharges_NBB</p></td>
+<td><p>Discharges</p></td>
+</tr>
+<tr class="row-odd"><td><p>SupResGW_NBB</p></td>
+<td><p>Complex impacts</p></td>
+</tr>
+</tbody>
+</table>
+<p>This summary indicates that the SACO tool uses three tables that are indexed by
+waterbody (i.e. one row per waterbody): IntegratedWBs_NBB, QNaturalFlows_NBB and
+AbsSensBands_NBB. ASBPercentages is essentially a metadata table that facilitates
+calculation of the environmental flow indicator (EFI) for each waterbody. The remaining
+four tables of artificial influences are indexed by “point”. For example, a given
+abstraction might have multiple point locations associated with it. The impact of each
+of these points is entered on one row in the relevant table.</p>
+<p>All tables except ASBPercentages have a “wide” format, i.e. they may contain multiple
+value columns and no “factor” columns. For example, the abstractions tables contain a
+separate value column for the impact of each combination of scenario and percentile.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>An abstraction licence may also include multiple “purpose codes” that define the
+permitted reason for abstraction. The abstraction tables are therefore technically
+given on a licence-point-purpose basis.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some artificial influences are highly complex, so care (and often local expertise)
+is needed when using and interpreting the various tables in WRGIS.</p>
+</div>
+</section>
+<section id="conceptualisation">
+<h3>Conceptualisation<a class="headerlink" href="#conceptualisation" title="Link to this heading"></a></h3>
+<p>Here we summarise a few relevant aspects of the WRGIS conceptual model:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Individual surface water abstraction points, (surface water) discharge points
+and complex influence points can impact one waterbody.</p></li>
+<li><p>Discharges do not vary as a function of percentile or scenario (RA and FL only)
+in general. Values tend to represent dry weather flows or consented discharges,
+but this may vary between discharges and areas.</p></li>
+<li><p>Complex impacts may be positive (increasing flow) or negative (decreasing flow).</p></li>
+<li><p>Groundwater abstractions may impact between one and five waterbodies according to
+a fixed set of proportions (summing to 100%). These proportions are constant
+across flow percentiles and abstraction scenarios.</p></li>
+<li><p>Total artificial influence impacts are disaggregated across the FDC (selected
+percentiles) with reference to known/modelled seasonality.</p></li>
+<li><p>Scenario flows are defined as the flows resulting after artificial influences
+have been applied to natural flows. These are effectively denaturalised flows.</p></li>
+<li><p>Scenario flows are calculated through a simple water balance for a given
+combination of artificial influences scenario (RA, FL or FP) and percentile
+(95, 70, 50, 30).</p></li>
+<li><p>This is equivalent to an instantaneous propagation of impacts through the network
+of waterbodies. I.e. there are no time-dependent considerations in the “routing”
+of flows and impacts. Implicitly, all waterbodies thus experience the same flow
+percentile at the same time.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="limitations">
+<h3>Limitations<a class="headerlink" href="#limitations" title="Link to this heading"></a></h3>
+<p>The SACO tool operates in “WRGIS world” and explicitly seeks to preserve the “rules” of
+this world. Yet, as a national data product, WRGIS encodes a number of simplifications
+and assumptions, including those outlined in the previous section. These features are
+inherited by the SACO tool. It is also bound by limitations of the data, i.e. the
+uncertainties, approximations and errors involved in translating observed or estimated
+quantities into the WRGIS database.</p>
+<p>It is important to note that the SACO tool is “downstream” of WRGIS. This means that it
+takes WRGIS tables as inputs. One implication of this is that the SACO tool is currently
+“downstream” of the process that assigns an impact to each artificial influence at each
+flow percentile to create the “base” WRGIS. (As noted above, this assignment is
+undertaken by the WRGIS toolset using information from the CAMS ledgers.) The SACO tool
+can explore the implications of changing specific numbers in the tables (via the
+Calculator and Optimiser components outlined in the <a class="reference internal" href="overview.html"><span class="doc">Overview</span></a>), but it does not
+contain all the logic/data through which “base” impacts are assigned in the ledgers and
+WRGIS.</p>
+</section>
+</section>
+<section id="processing">
+<h2>Processing<a class="headerlink" href="#processing" title="Link to this heading"></a></h2>
+<p>Functions for processing the raw data tables from the WRGIS database (currently in
+Access format) into the format required by SACO are not included within the SACO
+package currently. To summarise this functionality, the main processing steps are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Extract tables and perform basic checks of indexes and important columns. Columns
+not required in the SACO tool are filtered out.</p></li>
+<li><p>Convert waterbody relationships into a directed graph (<code class="docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code>).
+This provides useful helper functions/methods for working with the network.</p></li>
+<li><p>Calculate other derived quantities for convenience, including environmental flow
+indicators (EFIs) for each waterbody and flow percentile (as a function of
+abstraction sensitivity band, which defines a permitted fractional deviation from
+the natural flow).</p></li>
+</ul>
+</div></blockquote>
+<p>The processing code writes a set of output files to a specified directory. The data
+tables are generally saved in parquet format, the network graph is saved in graphml
+format, and a numpy helper array (routing matrix) is saved in compressed npz format. A
+directory containing these files forms the main input to the SACO tool.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>EFIs are calculated as per WRGIS. This is consistent with the CAMS ledgers at the
+95th flow percentile, but some (typically small) divergence is possible at higher
+flow percentiles. The calculations in the CAMS ledgers use additional data that are
+not yet readily available at the waterbody scale. However, work is underway to
+harmonise the WRGIS/SACO method of EFI calculation with the CAMS ledger method for
+full consistency above the 95th percentile.</p>
+</div>
+</section>
+<section id="further-details">
+<h2>Further Details<a class="headerlink" href="#further-details" title="Link to this heading"></a></h2>
+<p>See the <a class="reference internal" href="fields.html"><span class="doc">Table Fields</span></a> and <a class="reference internal" href="tutorial.html"><span class="doc">Tutorial</span></a> pages for more explanation of each of the
+tables involved in SACO input/output. Synthetic examples of the tables/data (with no
+relationship to any real waterbodies or artificial influences) are available in the
+repository (under the examples directory, as well as in tests/data). These examples can
+be read in and viewed using the notebook in the examples folder of the repository.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="overview.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="calculator.html" class="btn btn-neutral float-right" title="Calculator" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Environment Agency.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

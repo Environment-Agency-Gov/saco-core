@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dataset &mdash; saco  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="saco.Dataset.find_outlet_waterbodies" href="generated/saco.Dataset.find_outlet_waterbodies.html" />
+    <link rel="prev" title="Table Fields" href="fields.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            saco
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Background:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calculator.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimiser.html">Optimiser</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="fields.html">Table Fields</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Dataset</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#saco.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.__init__"><code class="docutils literal notranslate"><span class="pre">Dataset.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.asb_percs"><code class="docutils literal notranslate"><span class="pre">Dataset.asb_percs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.asbs"><code class="docutils literal notranslate"><span class="pre">Dataset.asbs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.dis"><code class="docutils literal notranslate"><span class="pre">Dataset.dis</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.efi"><code class="docutils literal notranslate"><span class="pre">Dataset.efi</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.gwabs"><code class="docutils literal notranslate"><span class="pre">Dataset.gwabs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.mt"><code class="docutils literal notranslate"><span class="pre">Dataset.mt</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.qnat"><code class="docutils literal notranslate"><span class="pre">Dataset.qnat</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.sup"><code class="docutils literal notranslate"><span class="pre">Dataset.sup</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.swabs"><code class="docutils literal notranslate"><span class="pre">Dataset.swabs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.wbs"><code class="docutils literal notranslate"><span class="pre">Dataset.wbs</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.find_outlet_waterbodies.html">saco.Dataset.find_outlet_waterbodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.identify_upstream_waterbodies.html">saco.Dataset.identify_upstream_waterbodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.load_data.html">saco.Dataset.load_data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.set_flow_targets.html">saco.Dataset.set_flow_targets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.set_optimise_flag.html">saco.Dataset.set_optimise_flag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.set_tables.html">saco.Dataset.set_tables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.write_tables.html">saco.Dataset.write_tables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference-calculate.html">Calculator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference-optimise.html">Optimiser</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">saco</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Dataset</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/reference-dataset.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="dataset">
+<h1>Dataset<a class="headerlink" href="#dataset" title="Link to this heading"></a></h1>
+<p>A <em>Dataset</em> class is used to group WRGIS-like data tables together and perform common
+read/write/modify operations. The calculator and optimiser components of the tool take
+a <em>Dataset</em> as their main input.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="saco.Dataset">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">saco.</span></span><span class="sig-name descname"><span class="pre">Dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constants</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Constants</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saco.Dataset" title="Link to this definition"></a></dt>
+<dd><p>Container to group core data tables for use in calculator/optimiser components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_folder</strong> – Path to folder containing all input files.</p></li>
+<li><p><strong>scenarios</strong> – Names of artificial influences scenarios.</p></li>
+<li><p><strong>percentiles</strong> – Flow percentiles (natural).</p></li>
+<li><p><strong>value_types</strong> – Indicator of aggregation types (‘sub’ or ‘ups’).</p></li>
+<li><p><strong>constants</strong> – Global constants (by default instance of config.Constants).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">saco</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">data_folder</span><span class="o">=</span><span class="s1">&#39;/path/to/data/files&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="saco.Dataset.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scenarios</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">percentiles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_types</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constants</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Constants</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saco.Dataset.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.find_outlet_waterbodies.html#saco.Dataset.find_outlet_waterbodies" title="saco.Dataset.find_outlet_waterbodies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_outlet_waterbodies</span></code></a>([assessed_outlets_only])</p></td>
+<td><p>Find IDs of &quot;outlet&quot; waterbodies (i.e. no <em>relevant</em> downstream waterbodies).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.identify_upstream_waterbodies.html#saco.Dataset.identify_upstream_waterbodies" title="saco.Dataset.identify_upstream_waterbodies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identify_upstream_waterbodies</span></code></a>(outlet_waterbodies)</p></td>
+<td><p>Identify all waterbodies upstream of (and including) a waterbody(s).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.load_data.html#saco.Dataset.load_data" title="saco.Dataset.load_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_data</span></code></a>([skip_tables, set_index, validate])</p></td>
+<td><p>Load data tables, directed graph (waterbody network) and routing matrix.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.set_flow_targets.html#saco.Dataset.set_flow_targets" title="saco.Dataset.set_flow_targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_flow_targets</span></code></a>([overall_target, ...])</p></td>
+<td><p>Set flow target columns in Master table (in <em>Dataset.mt.data</em> attribute).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.set_optimise_flag.html#saco.Dataset.set_optimise_flag" title="saco.Dataset.set_optimise_flag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_optimise_flag</span></code></a>([swabs_exclusions, ...])</p></td>
+<td><p>Set the (at least initial) value of the optimise flag columns in relevant tables.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.set_tables.html#saco.Dataset.set_tables" title="saco.Dataset.set_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_tables</span></code></a>(tables)</p></td>
+<td><p>Set <em>data</em> attributes of tables.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.write_tables.html#saco.Dataset.write_tables" title="saco.Dataset.write_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_tables</span></code></a>(output_folder[, overwrite, ...])</p></td>
+<td><p>Write data tables to parquet or (zipped) csv files.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saco.Dataset.asbs" title="saco.Dataset.asbs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asbs</span></code></a></p></td>
+<td><p>Instance of abstraction sensitivity bands (ASBs) table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saco.Dataset.asb_percs" title="saco.Dataset.asb_percs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asb_percs</span></code></a></p></td>
+<td><p>Instance of ASB percentage definitions table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saco.Dataset.dis" title="saco.Dataset.dis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dis</span></code></a></p></td>
+<td><p>Instance of discharges table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saco.Dataset.efi" title="saco.Dataset.efi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">efi</span></code></a></p></td>
+<td><p>Instance of environmental flow indicator (EFI) table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saco.Dataset.gwabs" title="saco.Dataset.gwabs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gwabs</span></code></a></p></td>
+<td><p>Instance of groundwater abstractions table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saco.Dataset.mt" title="saco.Dataset.mt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mt</span></code></a></p></td>
+<td><p>Instance of waterbody level &quot;master&quot; table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saco.Dataset.qnat" title="saco.Dataset.qnat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qnat</span></code></a></p></td>
+<td><p>Instance of natural flows table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saco.Dataset.sup" title="saco.Dataset.sup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sup</span></code></a></p></td>
+<td><p>Instance of complex impacts table.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#saco.Dataset.swabs" title="saco.Dataset.swabs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">swabs</span></code></a></p></td>
+<td><p>Instance of surface water abstractions table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#saco.Dataset.wbs" title="saco.Dataset.wbs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wbs</span></code></a></p></td>
+<td><p>Instance of waterbody metadata table.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.asb_percs">
+<span class="sig-name descname"><span class="pre">asb_percs</span></span><a class="headerlink" href="#saco.Dataset.asb_percs" title="Link to this definition"></a></dt>
+<dd><p>Instance of ASB percentage definitions table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.asb_percs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.asbs">
+<span class="sig-name descname"><span class="pre">asbs</span></span><a class="headerlink" href="#saco.Dataset.asbs" title="Link to this definition"></a></dt>
+<dd><p>Instance of abstraction sensitivity bands (ASBs) table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.AbsSensBands_NBB</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.dis">
+<span class="sig-name descname"><span class="pre">dis</span></span><a class="headerlink" href="#saco.Dataset.dis" title="Link to this definition"></a></dt>
+<dd><p>Instance of discharges table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.Discharges_NBB</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.efi">
+<span class="sig-name descname"><span class="pre">efi</span></span><a class="headerlink" href="#saco.Dataset.efi" title="Link to this definition"></a></dt>
+<dd><p>Instance of environmental flow indicator (EFI) table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.EFI</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.gwabs">
+<span class="sig-name descname"><span class="pre">gwabs</span></span><a class="headerlink" href="#saco.Dataset.gwabs" title="Link to this definition"></a></dt>
+<dd><p>Instance of groundwater abstractions table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.GWABs_NBB</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.mt">
+<span class="sig-name descname"><span class="pre">mt</span></span><a class="headerlink" href="#saco.Dataset.mt" title="Link to this definition"></a></dt>
+<dd><p>Instance of waterbody level “master” table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.Master</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.qnat">
+<span class="sig-name descname"><span class="pre">qnat</span></span><a class="headerlink" href="#saco.Dataset.qnat" title="Link to this definition"></a></dt>
+<dd><p>Instance of natural flows table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.QNaturalFlows_NBB</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.sup">
+<span class="sig-name descname"><span class="pre">sup</span></span><a class="headerlink" href="#saco.Dataset.sup" title="Link to this definition"></a></dt>
+<dd><p>Instance of complex impacts table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.SupResGW_NBB</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.swabs">
+<span class="sig-name descname"><span class="pre">swabs</span></span><a class="headerlink" href="#saco.Dataset.swabs" title="Link to this definition"></a></dt>
+<dd><p>Instance of surface water abstractions table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.SWABS_NBB</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="saco.Dataset.wbs">
+<span class="sig-name descname"><span class="pre">wbs</span></span><a class="headerlink" href="#saco.Dataset.wbs" title="Link to this definition"></a></dt>
+<dd><p>Instance of waterbody metadata table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tables.IntegratedWBs_NBB</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fields.html" class="btn btn-neutral float-left" title="Table Fields" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="generated/saco.Dataset.find_outlet_waterbodies.html" class="btn btn-neutral float-right" title="saco.Dataset.find_outlet_waterbodies" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Environment Agency.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

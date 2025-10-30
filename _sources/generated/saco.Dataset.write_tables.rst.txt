@@ -1,0 +1,6 @@
+﻿saco.Dataset.write\_tables
+==========================
+
+.. currentmodule:: saco
+
+.. automethod:: Dataset.write_tables

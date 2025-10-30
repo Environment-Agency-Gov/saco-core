@@ -1,0 +1,6 @@
+﻿saco.Dataset.load\_data
+=======================
+
+.. currentmodule:: saco
+
+.. automethod:: Dataset.load_data
