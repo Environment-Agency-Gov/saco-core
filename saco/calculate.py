@@ -19,7 +19,7 @@ import pandas as pd
 import networkx as nx
 
 from .tables import DataTable
-from .dataset import Dataset, subset_dataset_on_wbs
+from .dataset import Dataset, subset_dataset_on_wbs, subset_dataset_on_columns
 from .config import Constants
 
 
@@ -109,10 +109,10 @@ class Calculator:
             tolerance_dp: int = 3,
             constants: Constants = None,
     ):
-        if domain is None:
-            self.ds = copy.deepcopy(input_dataset)
-        else:
-            self.ds = subset_dataset_on_wbs(input_dataset, domain)
+        self.domain = domain
+
+        self.ds = None
+        self.set_dataset(input_dataset, scenarios, percentiles)
 
         if unassessed_waterbodies is None:
             unassessed_waterbodies = self.identify_unassessed_waterbodies()
@@ -137,6 +137,38 @@ class Calculator:
         if bin_edges is None:
             bin_edges = self.constants.compliance_bin_edges
         self.bin_edges = bin_edges
+
+    def set_dataset(
+            self, ds: Dataset, scenarios: List[str] = None,
+            percentiles: List[int] = None,
+    ):
+        """
+        Set dataset attribute to be used in calculations.
+
+        If domain was specified on initialisation, the dataset will be subset on the
+        relevant waterbodies. Otherwise the full input dataset is retained.
+
+        Args:
+            ds: Input Dataset.
+            scenarios: Names/abbreviations of artificial influences scenarios for which
+                calculations should be performed. If None (default) then taken from
+                input_dataset.
+            percentiles: Flow percentiles (natural) for which calculations should be
+                performed. If None (default) then taken from input_dataset.
+
+        """
+        if scenarios is None:
+            scenarios = []
+        if percentiles is None:
+            percentiles = []
+
+        if self.domain is None:
+            self.ds = copy.deepcopy(ds)
+        else:
+            self.ds = subset_dataset_on_wbs(ds, self.domain)
+
+        if (len(scenarios) > 0) and (len(percentiles) > 0):
+            self.ds = subset_dataset_on_columns(self.ds, scenarios, percentiles)
 
     def run(self, master_only: bool = False) -> Dataset | pd.DataFrame:
         """

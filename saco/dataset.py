@@ -441,25 +441,27 @@ class Dataset:
                 be overridden by custom_targets and/or df arguments. See notes below for
                 valid arguments.
             custom_targets: For overriding overall_target for specific waterbodies. See
-                discussion/example above for a guide to formulating this dictionary.
+                discussion/example below for a guide to formulating this dictionary.
             overwrite_existing: Whether to overwrite any flow target columns that
                 already exist in the dataframe. If False (default) then overall_target
                 and custom_targets will not be used to overwrite existing flow target
                 columns. However, if df is not None, it will be used regardless of
                 overwrite_existing value.
             df: Dataframe indexed by waterbody and containing any flow target columns
-                that should be given priority. It does not need to contain all
+                that should be given priority (Ml/d). It does not need to contain all
                 waterbodies in the domain/dataset. Used regardless of
                 overwrite_existing.
 
         Notes:
+
             Valid arguments for overall_target are: 'compliant', 'band-1', 'band-2',
-            'band-3' and 'no-det'. The first four options refer to compliance bands
-            (relative to the EFI)> In each case, the target is the minimum flow needed
-            to achieve the band (i.e. the lower bound/edge of the band).
+            'band-3', 'none' and 'no-det'. The first four options refer to compliance
+            bands (relative to the EFI). In each case, the target is the minimum flow
+            needed to achieve the band (i.e. the lower bound/edge of the band). 'none'
+            and 'band-3' are aliases (i.e. no flow target / trivial target of zero).
 
             The final option ('no-det') stands for "no deterioration" of compliance
-            band between the RA and FL scenarios. Again, this  is translated into the
+            band between the RA and FL scenarios. Again, this is translated into the
             minimum flow required to meet this condition, i.e. the lower bound of the
             appropriate band. Note that this is not the same as no change between the
             RA and FL scenario flows (which could be implemented by passing an
@@ -474,11 +476,12 @@ class Dataset:
             supplied through the df argument. This is given priority and it will also be
             used regardless of the overwrite_existing argument (currently). This
             dataframe should have waterbody ID as its index (with name EA_WB_ID) and
-            one or more flow target columns whose names follow ``f'QT{S}Q{P}'``, where
-            ``S`` is a scenario name and ``P`` is a flow percentile.
+            one or more flow target columns (in Ml/d) whose names follow
+            ``f'QT{S}Q{P}'``, where ``S`` is a scenario name and ``P`` is a flow
+            percentile.
 
         """
-        valid_targets = ['compliant', 'band-1', 'band-2', 'band-3', 'no-det']
+        valid_targets = ['compliant', 'band-1', 'band-2', 'band-3', 'none', 'no-det']
 
         if overall_target not in valid_targets:
             raise ValueError(f'Overall flow target not recognised: {overall_target}')
@@ -524,24 +527,15 @@ class Dataset:
 
     def set_optimise_flag(
             self, swabs_exclusions: Iterable[str] | None = ('reservoir', 'ldmu', 'lake'),
-            purpose_exclusions: Iterable[str] = None,
+            purpose_exclusions: Iterable[str] = None, exclude_deregulated: bool = True,
+            exclude_below: float | None = 0.1,
+            exclude_below_case: tuple | None = ('FL', 95),
     ):
         """
         Set the (at least initial) value of the optimise flag columns in relevant tables.
 
-        This method operates on the *data* attributes of the SWABS_NBB and GWABs_NBB
-        tables only currently. If not already present, it inserts a flag column that is
-        used in the optimiser to include/exclude (1/0) particular table rows in the
-        optimisation.
-
-        Options are available to:
-
-            - Flag particular types of surface water abstractions for exclusion from
-              optimisation (in line with the Fix-It tool).
-            - Flag particular abstraction purposes for exclusion from optimisation.
-
-        Note that exclusions based on purpose are applied to both surface water and
-        groundwater abstractions
+        The main role of this method is to provide defaults on what is included and
+        excluded (i.e. available for change or not) during optimisation.
 
         Args:
             swabs_exclusions: Types of surface water abstractions to exclude (one or
@@ -552,14 +546,60 @@ class Dataset:
                 purpose_exclusions=['WPWS330', 'E'] would flag any rows with the specific
                 purpose WPWS330 for exclusion from optimisation, as well as any purposes
                 beginning E. No exclusions by default.
+            exclude_deregulated: Whether to exclude "deregulated licences" from
+                optimisation - default is True, as not amenable to change in reality.
+            exclude_below: Threshold impact (Ml/d) below which (<=) abstractions should
+                be excluded during optimisation. Use None or 0.0 to indicate that there
+                should not be any exclusions based on impact magnitude. Based on
+                scenario and percentile combination defined by exclude_below_case.
+            exclude_below_case: Scenario and percentile combination to use in
+                conjunction with exclude_below threshold. By default, impacts less than
+                or equal to exclude_below under the fully licensed scenario at Q95 will
+                be flagged for exclusion from optimisation. Expects tuple like
+                ('FL', 95).
+
+        Notes:
+
+            This method operates on the *data* attributes of the SWABS_NBB, GWABs_NBB
+            and SupResGW_NBB (complex) tables. If not already present, it inserts a flag
+            column (called 'Optimise_Flag') that is used in the optimiser to
+            include/exclude (1/0) particular table rows in the optimisation. By default,
+            SWABS and GWABS rows are included (if not ruled out by one of the exlusion
+            arguments), whereas complex impacts are excluded. If 'Optimise_Flag' columns
+            are already present in the tables, this method will not modify them.
+
+            Options are available to:
+
+                - Flag particular types of surface water abstractions for exclusion from
+                  optimisation (in line with the Fix-It tool).
+                - Flag particular abstraction purposes for exclusion from optimisation.
+                - Flag that deregulated licences should be excluded during optimisation.
+                - Flag that impacts below some threshold should be excluded during
+                  optimisation.
+
+            Note that exclusions based on purpose are applied to both surface water and
+            groundwater abstractions.
+
+            A user also has the option to (1) modify the Optimise_Flag columns created by
+            this method or (2) set them manually. For complex impacts (in table
+            SupResGW_NBB), manual intervention is necessary (by default these impacts
+            are excluded from optimisation). See tutorial in documentation for complex
+            flag details.
 
         """
         if swabs_exclusions is None:
             swabs_exclusions = []
         if purpose_exclusions is None:
             purpose_exclusions = []
+        if exclude_below is None:
+            exclude_below = 0.0
 
-        if self.swabs.optimise_flag_column not in self.swabs.data.columns:
+        if self.swabs.optimise_flag_column in self.swabs.data.columns:
+            warnings.warn(
+                'Optimise_Flag column already present in SWABS_NBB - it will not be '
+                'altered by set_optimise_flag method.'
+            )
+        else:
             self.swabs.data[self.swabs.optimise_flag_column] = 1
 
             if 'reservoir' in swabs_exclusions:
@@ -578,20 +618,33 @@ class Dataset:
                         self.swabs.data[lake_col] > 0, self.swabs.optimise_flag_column
                     ] = 0
 
-            for purpose in purpose_exclusions:
-                self.swabs.data.loc[
-                    self.swabs.data[self.swabs.purpose_column].str.startswith(purpose),
-                    self.swabs.optimise_flag_column
-                ] = 0
+            self._set_common_exclusions(
+                    'SWABS_NBB', purpose_exclusions, exclude_deregulated,
+                exclude_below, exclude_below_scenario=exclude_below_case[0],
+                exclude_below_percentile=exclude_below_case[1],
+            )
 
-        if self.gwabs.optimise_flag_column not in self.gwabs.data.columns:
+        if self.gwabs.optimise_flag_column in self.gwabs.data.columns:
+            warnings.warn(
+                'Optimise_Flag column already present in GWABs_NBB - it will not be '
+                'altered by set_optimise_flag method.'
+            )
+        else:
             self.gwabs.data[self.gwabs.optimise_flag_column] = 1
 
-            for purpose in purpose_exclusions:
-                self.gwabs.data.loc[
-                    self.gwabs.data[self.gwabs.purpose_column].str.startswith(purpose),
-                    self.gwabs.optimise_flag_column
-                ] = 0
+            self._set_common_exclusions(
+                'GWABs_NBB', purpose_exclusions, exclude_deregulated,
+                exclude_below, exclude_below_scenario=exclude_below_case[0],
+                exclude_below_percentile=exclude_below_case[1],
+            )
+
+        if self.sup.optimise_flag_column in self.sup.data.columns:
+            warnings.warn(
+                'Optimise_Flag column already present in SupResGW_NBB - it will not be '
+                'altered by set_optimise_flag method.'
+            )
+        else:
+            self.sup.data[self.sup.optimise_flag_column] = 0
 
     def _calculate_flow_targets(
             self, overall_target: str, custom_targets: Dict = None,
@@ -599,7 +652,7 @@ class Dataset:
         """See docstring for set_flow_targets, for which this method is a helper."""
         col_mapper = {
             'compliant': '__COMPLIANT', 'band-1': '__BAND1', 'band-2': '__BAND2',
-            'band-3': '__BAND3', 'no-det': '__NO_DET',
+            'band-3': '__BAND3', 'none': '__NONE', 'no-det': '__NO_DET',
         }
 
         df = self.mt.data.copy()
@@ -612,9 +665,10 @@ class Dataset:
             df['__COMPLIANT'] = df[efi_col]
             f1 = self.constants.compliance_bin_edges[2]
             df['__BAND1'] = df[efi_col] + f1 * df[qnat_col]
-            f2 = self.constants.compliance_bin_edges[3]
+            f2 = self.constants.compliance_bin_edges[1]
             df['__BAND2'] = df[efi_col] + f2 * df[qnat_col]
             df['__BAND3'] = 0.0
+            df['__NONE'] = 0.0
 
             if ra_comp_col in df.columns:
                 df['__NO_DET'] = df[efi_col]
@@ -660,6 +714,40 @@ class Dataset:
         df = df[qt_cols]
 
         return df
+
+    def _set_common_exclusions(
+            self, table_name: str, purpose_exclusions: Iterable[str],
+            exclude_deregulated: bool, exclude_below: float,
+            exclude_below_scenario: str, exclude_below_percentile: int,
+    ):
+        """See docstring for set_optimise_flag, for which this method is a helper."""
+        if table_name == 'SWABS_NBB':
+            table = self.swabs
+        elif table_name == 'GWABs_NBB':
+            table = self.gwabs
+        else:
+            raise ValueError(f'Unexpected table name: {table_name}')
+
+        for purpose in purpose_exclusions:
+            table.data.loc[
+                table.data[table.purpose_column].str.startswith(purpose),
+                table.optimise_flag_column
+            ] = 0
+
+        if exclude_deregulated:
+            table.data.loc[
+                table.data[table.licence_expiry_column] == 'D',
+                table.optimise_flag_column
+            ] = 0
+
+        if exclude_below > 0.0:
+            impact_col = table.get_value_column(
+                exclude_below_scenario, exclude_below_percentile,
+            )
+            table.data.loc[
+                table.data[impact_col] <= exclude_below,
+                table.optimise_flag_column
+            ] = 0
 
     @property
     def tables(self) -> List[Table]:
@@ -988,6 +1076,7 @@ def concatenate_datasets(
 def find_differences(
         ds1: Dataset, ds2: Dataset, table_names: List[str],
         require_rows_match: bool = True, require_columns_match: bool = True,
+        significance_threshold: float | None = None,
 ) -> Dict[str, pd.DataFrame]:
     """
     Calculate differences between data tables of two Dataset instances.
@@ -1008,6 +1097,9 @@ def find_differences(
             (indexes) (ignoring order).
         require_columns_match: Whether data tables should match completely on columns
             (ignoring order).
+        significance_threshold: If absolute differences are below this threshold then
+            they will be set to zero (to avoid spurious precision in outputs). By
+            default no changes are made.
 
     Returns:
         Dictionary with keys as table names and values as dataframes whose value
@@ -1043,6 +1135,14 @@ def find_differences(
         )
         for value_col in ds2.get_table(table_name).value_columns:
             df3[value_col] -= df3[f'{value_col}__REF']
+
+            if significance_threshold is not None:
+                df3[value_col] = np.where(
+                    np.abs(df3[value_col]) < significance_threshold,
+                    0.0,
+                    df3[value_col]
+                )
+
         cols_to_drop = [col for col in df3.columns if col.endswith('__REF')]
         df3 = df3.drop(columns=cols_to_drop)
 

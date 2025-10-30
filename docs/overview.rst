@@ -20,7 +20,7 @@ duration curve (FDC), rather than as time series.
     and groundwater) and discharges - see :doc:`data` page for further details.
 
 For some waterbodies, abstraction impacts may reduce flows below environmental flow
-targets. At a high level, the role of the SACO tool is to help indicate potential ways
+targets. At a high level, the role of the SACO tool is to help find potential ways
 in which flows could be restored to meet targets in these cases.
 
 The SACO tool can currently help explore two types of questions:
@@ -37,7 +37,7 @@ When answering the second question we formulate and solve an optimisation proble
 propose solutions. In this case, we are asking the tool to suggest a set of impact
 changes, given an objective(s) and some constraints that we set.
 
-It is also  possible to address questions that are some combination of (1) and (2).
+It is also possible to address questions that are some combination of (1) and (2).
 For example, if we change a set of abstractions in a certain way (that we prescribe)
 but some flow targets are still not met, what else could be done? Here we would like
 the tool to suggest further changes to us to solve the remaining part of the problem

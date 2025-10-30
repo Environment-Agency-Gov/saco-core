@@ -391,6 +391,7 @@ class GWABs_NBB(DataTable):
             'type': bool, 'nullable': False, 'required': False,
         }
         auxiliary_columns[self.purpose_column] = {'type': str, 'nullable': False}
+        auxiliary_columns[self.licence_expiry_column] = {'type': str, 'nullable': True}
 
         # Metadata columns that are not used in the code (and do not have a property to
         # indicate the column name)
@@ -484,6 +485,11 @@ class GWABs_NBB(DataTable):
         return 'PURPCODE'
 
     @property
+    def licence_expiry_column(self) -> str:
+        """Name of column with date/flag indicating licence expiry date."""
+        return 'LICN_EXPD'
+
+    @property
     def infill_mapping(self) -> Dict:
         """
         Values to use for infilling missing entries in particular columns.
@@ -515,6 +521,7 @@ class SWABS_NBB(DataTable):
         auxiliary_columns[self.ldmu_flag_column] = {'type': int, 'nullable': False}
         for lake_col in self.lake_flag_columns:
             auxiliary_columns[lake_col] = {'type': int, 'nullable': False}
+        auxiliary_columns[self.licence_expiry_column] = {'type': str, 'nullable': True}
 
         # Metadata columns that are not used in the code (and do not have a property to
         # indicate the column name)
@@ -611,6 +618,11 @@ class SWABS_NBB(DataTable):
     def lake_flag_columns(self) -> List[str]:
         """Name of columns indicating whether an abstraction is lake-related."""
         return [f'SW_LAKE{i}' for i in range(1, 6)]
+
+    @property
+    def licence_expiry_column(self) -> str:
+        """Name of column with date/flag indicating licence expiry date."""
+        return 'LICN_EXPD'
 
     @property
     def infill_mapping(self) -> Dict:
@@ -735,6 +747,25 @@ class SupResGW_NBB(DataTable):
         """
         return f'{self.variable_abb}{scenario}Q{percentile}'
 
+    def get_upper_limit_column(self, scenario: str, percentile: int) -> str:
+        """
+        Return name of column giving upper limit of allow compensation flow effects.
+
+        This is only relevant if complex impacts are being considered in the Optimiser -
+        specifically complex impacts where increases in reservoir compensation flow are
+        being explored. Otherwise, this column is not required in the tool
+
+        Args:
+            scenario: Name/abbreviation of artificial influences scenario.
+            percentile: Flow percentile (natural).
+
+        Returns:
+             Name of column giving upper limit on potential reservoir compensation flow
+             increase effect.
+
+        """
+        return f'{self.variable_abb}{scenario}Q{percentile}_MAX_INCREASE'
+
     @property
     def name(self) -> str:
         return 'SupResGW_NBB'
@@ -764,6 +795,11 @@ class SupResGW_NBB(DataTable):
     def purposes_to_exclude(self) -> List[str]:
         """Impact purposes that should be excluded from aggregation/summation."""
         return ['Trib Summary Impacts', 'LDMU']
+
+    @property
+    def optimise_flag_column(self) -> str:
+        """Column indicating whether/how a row should be included in optimisation."""
+        return self.constants.optimise_flag_column
 
 
 class QNaturalFlows_NBB(DataTable):

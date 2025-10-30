@@ -25,7 +25,8 @@ toolset, the WBAT and the SACO Calculator.
 
 .. note::
 
-    See :doc:`data` page for definitions of artificial influences and scenario flows.
+    The Calculator uses WRGIS abstraction impact fields that already account for (local)
+    consumptiveness. This should be remembered if abstraction impacts are modified.
 
 Terminology
 -----------
@@ -61,10 +62,10 @@ surpluses/deficits and compliance classifications:
        flow ("ups") and then comparing this quantity with the band definitions in the
        table below.
 
-*Compliance band definitions*
+*Compliance band definitions based on deficit (D) and natural flow (Qn)*
 
 =========   ===============================
-Band        Deficit (D) / Natural Flow (Qn)
+Band        Definition
 =========   ===============================
 Compliant   D / Qn >= 0
 1           -0.25 <= D / Qn < 0
@@ -94,7 +95,8 @@ waterbody has a scenario flow of 10 Ml/d coming in from upstream (i.e. after all
 artificial influences *upstream* of the waterbody are taken into account). Say then that
 the impact of artificial influences inside that waterbody ("sub") in a given scenario
 is prescribed as -15 Ml/d. Say also that the waterbody does not generate any runoff
-inside its area. The net impact (abstraction) therefore exceeds the available flow.
+inside its area. The net impact (abstraction) therefore exceeds the available flow by
+5 Ml/d.
 
 In this example, the WBAT would effectively take the available 10 Ml/d, giving a
 scenario flow of zero for the waterbody. However, it would also then propagate a -15
@@ -104,16 +106,24 @@ In contrast, the WRGIS toolset would limit the net impact propagated to downstre
 waterbodies to -10 Ml/d. I.e. the impact would be "capped" to what can actually be
 taken in the waterbody in question.
 
-The WBAT works in this way partly because "capping" would be hard to implement in
+The WBAT works in this way partly because "capping" would be harder to implement in
 Excel. It might be expected that the WBAT provides slightly more conservative results
 than WRGIS where cases of "capping" arise in WRGIS. This is a situation that does
 occur with non-negligible frequency in the base WRGIS (and higher frequency in the
 fully licensed abstraction scenario).
 
 In the SACO Calculator we have provided options to follow both the WBAT approach and a
-WRGIS-like approach to this situation. The latter approach involves capping net impacts
-at the waterbody scale, rather than adjusting individual artificial influences at the
-point scale. An upstream-to-downstream loop adjusts net impacts by the minimum amount
-needed to ensure that scenario flows do not become negative. We adopt this approach to
-emulate the WRGIS toolset calculations as far as possible, but an alternative could
-involve using a network flow model to solve for all flows and feasible impacts directly.
+WRGIS-like approach to this situation. The latter approach is the default and involves
+capping net impacts at the waterbody scale, rather than adjusting individual artificial
+influences at the point scale. An upstream-to-downstream loop adjusts net impacts by
+the minimum amount needed to ensure that scenario flows do not become negative. We
+adopt this approach to emulate the WRGIS toolset calculations as far as possible, but
+an alternative could involve using a network flow model to solve for all flows and
+feasible impacts directly.
+
+.. note::
+
+    If capping has been applied to avoid propagation of unfeasible impacts, scenario
+    flows output from the Calculator may be larger than initially expected from
+    performing a simple "ups" water balance calculation for some waterbodies. This is
+    because capping reduced net impacts upstream to retain physical plausibility.

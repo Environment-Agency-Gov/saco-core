@@ -95,3 +95,15 @@ def infill_cols(df: pd.DataFrame, dc: Dict) -> pd.DataFrame:
             if column in df.columns:
                 df.loc[df[column].isna(), column] = infill_value
     return df
+
+
+def slices_to_indexes(slices):
+    # e.g. [(0, 10), (14, 17), (25, 31)]
+    # tuples of lower and upper bound
+    # e.g (0, 3) returns indexes [0, 1, 2]
+    indexes = []
+    for lb, up in slices:
+        r = range(lb, up)
+        for idx in r:
+            indexes.append(idx)
+    return indexes

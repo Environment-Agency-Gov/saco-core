@@ -14,7 +14,7 @@ def test_optimiser_run(case_id):
     ds.load_data()
 
     ds.set_flow_targets()
-    ds.set_optimise_flag()
+    ds.set_optimise_flag(exclude_deregulated=False, exclude_below=None)
 
     optimiser = Optimiser(ds)
     ds_test = optimiser.run()
