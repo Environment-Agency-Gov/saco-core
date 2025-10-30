@@ -527,24 +527,15 @@ class Dataset:
 
     def set_optimise_flag(
             self, swabs_exclusions: Iterable[str] | None = ('reservoir', 'ldmu', 'lake'),
-            purpose_exclusions: Iterable[str] = None,
+            purpose_exclusions: Iterable[str] = None, exclude_deregulated: bool = True,
+            exclude_below: float | None = 0.1,
+            exclude_below_case: tuple | None = ('FL', 95),
     ):
         """
         Set the (at least initial) value of the optimise flag columns in relevant tables.
 
-        This method operates on the *data* attributes of the SWABS_NBB and GWABs_NBB
-        tables only currently. If not already present, it inserts a flag column that is
-        used in the optimiser to include/exclude (1/0) particular table rows in the
-        optimisation.
-
-        Options are available to:
-
-            - Flag particular types of surface water abstractions for exclusion from
-              optimisation (in line with the Fix-It tool).
-            - Flag particular abstraction purposes for exclusion from optimisation.
-
-        Note that exclusions based on purpose are applied to both surface water and
-        groundwater abstractions
+        The main role of this method is to provide defaults on what is included and
+        excluded (i.e. available for change or not) during optimisation.
 
         Args:
             swabs_exclusions: Types of surface water abstractions to exclude (one or
@@ -555,14 +546,60 @@ class Dataset:
                 purpose_exclusions=['WPWS330', 'E'] would flag any rows with the specific
                 purpose WPWS330 for exclusion from optimisation, as well as any purposes
                 beginning E. No exclusions by default.
+            exclude_deregulated: Whether to exclude "deregulated licences" from
+                optimisation - default is True, as not amenable to change in reality.
+            exclude_below: Threshold impact (Ml/d) below which (<=) abstractions should
+                be excluded during optimisation. Use None or 0.0 to indicate that there
+                should not be any exclusions based on impact magnitude. Based on
+                scenario and percentile combination defined by exclude_below_case.
+            exclude_below_case: Scenario and percentile combination to use in
+                conjunction with exclude_below threshold. By default, impacts less than
+                or equal to exclude_below under the fully licensed scenario at Q95 will
+                be flagged for exclusion from optimisation. Expects tuple like
+                ('FL', 95).
+
+        Notes:
+
+            This method operates on the *data* attributes of the SWABS_NBB, GWABs_NBB
+            and SupResGW_NBB (complex) tables. If not already present, it inserts a flag
+            column (called 'Optimise_Flag') that is used in the optimiser to
+            include/exclude (1/0) particular table rows in the optimisation. By default,
+            SWABS and GWABS rows are included (if not ruled out by one of the exlusion
+            arguments), whereas complex impacts are excluded. If 'Optimise_Flag' columns
+            are already present in the tables, this method will not modify them.
+
+            Options are available to:
+
+                - Flag particular types of surface water abstractions for exclusion from
+                  optimisation (in line with the Fix-It tool).
+                - Flag particular abstraction purposes for exclusion from optimisation.
+                - Flag that deregulated licences should be excluded during optimisation.
+                - Flag that impacts below some threshold should be excluded during
+                  optimisation.
+
+            Note that exclusions based on purpose are applied to both surface water and
+            groundwater abstractions.
+
+            A user also has the option to (1) modify the Optimise_Flag columns created by
+            this method or (2) set them manually. For complex impacts (in table
+            SupResGW_NBB), manual intervention is necessary (by default these impacts
+            are excluded from optimisation). See tutorial in documentation for complex
+            flag details.
 
         """
         if swabs_exclusions is None:
             swabs_exclusions = []
         if purpose_exclusions is None:
             purpose_exclusions = []
+        if exclude_below is None:
+            exclude_below = 0.0
 
-        if self.swabs.optimise_flag_column not in self.swabs.data.columns:
+        if self.swabs.optimise_flag_column in self.swabs.data.columns:
+            warnings.warn(
+                'Optimise_Flag column already present in SWABS_NBB - it will not be '
+                'altered by set_optimise_flag method.'
+            )
+        else:
             self.swabs.data[self.swabs.optimise_flag_column] = 1
 
             if 'reservoir' in swabs_exclusions:
@@ -581,20 +618,33 @@ class Dataset:
                         self.swabs.data[lake_col] > 0, self.swabs.optimise_flag_column
                     ] = 0
 
-            for purpose in purpose_exclusions:
-                self.swabs.data.loc[
-                    self.swabs.data[self.swabs.purpose_column].str.startswith(purpose),
-                    self.swabs.optimise_flag_column
-                ] = 0
+            self._set_common_exclusions(
+                    'SWABS_NBB', purpose_exclusions, exclude_deregulated,
+                exclude_below, exclude_below_scenario=exclude_below_case[0],
+                exclude_below_percentile=exclude_below_case[1],
+            )
 
-        if self.gwabs.optimise_flag_column not in self.gwabs.data.columns:
+        if self.gwabs.optimise_flag_column in self.gwabs.data.columns:
+            warnings.warn(
+                'Optimise_Flag column already present in GWABs_NBB - it will not be '
+                'altered by set_optimise_flag method.'
+            )
+        else:
             self.gwabs.data[self.gwabs.optimise_flag_column] = 1
 
-            for purpose in purpose_exclusions:
-                self.gwabs.data.loc[
-                    self.gwabs.data[self.gwabs.purpose_column].str.startswith(purpose),
-                    self.gwabs.optimise_flag_column
-                ] = 0
+            self._set_common_exclusions(
+                'GWABs_NBB', purpose_exclusions, exclude_deregulated,
+                exclude_below, exclude_below_scenario=exclude_below_case[0],
+                exclude_below_percentile=exclude_below_case[1],
+            )
+
+        if self.sup.optimise_flag_column in self.sup.data.columns:
+            warnings.warn(
+                'Optimise_Flag column already present in SupResGW_NBB - it will not be '
+                'altered by set_optimise_flag method.'
+            )
+        else:
+            self.sup.data[self.sup.optimise_flag_column] = 0
 
     def _calculate_flow_targets(
             self, overall_target: str, custom_targets: Dict = None,
@@ -664,6 +714,40 @@ class Dataset:
         df = df[qt_cols]
 
         return df
+
+    def _set_common_exclusions(
+            self, table_name: str, purpose_exclusions: Iterable[str],
+            exclude_deregulated: bool, exclude_below: float,
+            exclude_below_scenario: str, exclude_below_percentile: int,
+    ):
+        """See docstring for set_optimise_flag, for which this method is a helper."""
+        if table_name == 'SWABS_NBB':
+            table = self.swabs
+        elif table_name == 'GWABs_NBB':
+            table = self.gwabs
+        else:
+            raise ValueError(f'Unexpected table name: {table_name}')
+
+        for purpose in purpose_exclusions:
+            table.data.loc[
+                table.data[table.purpose_column].str.startswith(purpose),
+                table.optimise_flag_column
+            ] = 0
+
+        if exclude_deregulated:
+            table.data.loc[
+                table.data[table.licence_expiry_column] == 'D',
+                table.optimise_flag_column
+            ] = 0
+
+        if exclude_below > 0.0:
+            impact_col = table.get_value_column(
+                exclude_below_scenario, exclude_below_percentile,
+            )
+            table.data.loc[
+                table.data[impact_col] <= exclude_below,
+                table.optimise_flag_column
+            ] = 0
 
     @property
     def tables(self) -> List[Table]:
