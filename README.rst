@@ -40,7 +40,7 @@ Examples
 Jupyter notebook examples are available in the examples folder of the repository. It is
 worth looking at the documentation before/alongside the code examples.
 
-.. _documentation: https://Environment-Agency-Gov.github.io/saco-core/html/index.html
+.. _documentation: https://environment-agency-gov.github.io/saco-core/
 
 Contributions
 -------------
