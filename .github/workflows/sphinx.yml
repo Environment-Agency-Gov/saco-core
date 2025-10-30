@@ -17,11 +17,17 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Build HTML
-      uses: ammaraskar/sphinx-action@master
+    - uses: actions/setup-python@v5
       with:
-        docs-folder: docs/
-        pre-build-command: pip install -r docs/requirements.txt
+        python-version: '3.13'
+
+    - name: Install dependencies
+      run: pip install -r docs/requirements.txt
+
+    - name: Build HTML
+      run: |
+        cd docs
+        make html
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
