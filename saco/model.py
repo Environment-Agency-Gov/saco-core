@@ -1032,7 +1032,6 @@ class ArrayBuilder:
         only used for equality calcs...).
 
         """
-        # TODO: Could this method be rationalised with those generating s and t?
         gwabs_indexes = self.gwabs.data.groupby(
             self.gwabs.data.index.get_level_values(0)
         )[self.constants.arc_index_column].min().to_numpy()
