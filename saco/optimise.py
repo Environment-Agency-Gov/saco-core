@@ -12,10 +12,12 @@ import pandas as pd
 import cvxpy as cp
 
 from .config import Constants
-from .tables import GWABs_NBB, SWABS_NBB
+from .tables import GWABs_NBB, SWABS_NBB, SupResGW_NBB
 from .dataset import Dataset, concatenate_datasets, find_differences
 from .calculate import Calculator
-from .model import DataPreparer, ArrayBuilder, Model, SWABS, GWABS, AuxiliaryInfo
+from .model import (
+    DataPreparer, ArrayBuilder, Model, SWABS, GWABS, SupResGW, AuxiliaryInfo
+)
 
 
 class GWABS_Changes(GWABs_NBB):
@@ -40,12 +42,24 @@ class SWABS_Changes(SWABS_NBB):
         return 'swabs_chg'
 
 
+class SupResGW_Changes(SupResGW_NBB):
+
+    @property
+    def name(self) -> str:
+        return 'SupResGW_Changes'
+
+    @property
+    def short_name(self) -> str:
+        return 'sup_chg'
+
+
 class OutputDataset(Dataset):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.swabs_chg = None
         self.gwabs_chg = None
+        self.sup_chg = None
 
 
 class Optimiser:
@@ -209,8 +223,9 @@ class Optimiser:
         # Arrays for cvxpy
         array_builder = ArrayBuilder(
             formatted_data['flows-table'], formatted_data['swabs-table'],
-            formatted_data['gwabs-table'], formatted_data['subset-dataset'].graph,
-            formatted_data['subdomain-dicts'], self.raise_external_hof_error,
+            formatted_data['gwabs-table'], formatted_data['supresgw-table'],
+            formatted_data['subset-dataset'].graph, formatted_data['subdomain-dicts'],
+            self.raise_external_hof_error,
         )
         arrays, counts = array_builder.run()
 
@@ -220,10 +235,11 @@ class Optimiser:
         """
         Formulate and solve optimisation problem.
 
-        Two additional tables are present in the output relative to a "normal" Dataset:
-        SWABS_Changes and GWABS_Changes. These tables follow the format of SWABS_NBB and
-        GWABs_NBB, but their value columns represent required impact reductions - see
-        field descriptions in documentation for more details.
+        Three additional tables are present in the output relative to a "normal" Dataset:
+        SWABS_Changes, GWABS_Changes and SupResGW_Changes. These tables follow the format
+        of SWABS_NBB, GWABs_NBB and SupResGW_NBB, but their value columns represent
+        required impact changes - see field descriptions in documentation for more
+        details.
 
         Returns:
             Dataset but with abstraction impacts reflecting optimised values and
@@ -281,7 +297,8 @@ class Optimiser:
 
             ds = self._modify_dataset(
                 scenario, percentile, model, formatted_data['swabs-table'],
-                formatted_data['gwabs-table'], formatted_data['subset-dataset'],
+                formatted_data['gwabs-table'], formatted_data['supresgw-table'],
+                formatted_data['subset-dataset'],
             )
             interim_datasets.append(ds)
 
@@ -348,7 +365,7 @@ class Optimiser:
             reference_dataset = self.reference_dataset
 
         if table_names is None:
-            table_names = ['SWABS_NBB', 'GWABs_NBB']
+            table_names = ['SWABS_NBB', 'GWABs_NBB', 'SupResGW_NBB']
 
         dfs = find_differences(
             reference_dataset, self.output_dataset, table_names=table_names,
@@ -370,6 +387,10 @@ class Optimiser:
                 gwabs_changes = GWABS_Changes()
                 gwabs_changes.set_data(df)
                 self.output_dataset.gwabs_chg = gwabs_changes
+            elif table_name == 'SupResGW_NBB':
+                sup_changes = SupResGW_Changes()
+                sup_changes.set_data(df)
+                self.output_dataset.sup_chg = sup_changes
 
     def _check_for_required_cols(self):
         """Check flow targets and optimise flag columns are present in input Dataset."""
@@ -402,28 +423,56 @@ class Optimiser:
                 'Optimiser.'
             )
 
+        opt_col = self.input_dataset.sup.optimise_flag_column
+        if opt_col not in self.input_dataset.sup.data.columns:
+            raise ValueError(
+                'Missing Optimise_Flag column in SupResGW table in input Dataset. Set '
+                'manually or call Dataset.set_optimise_flag() before initialising '
+                'Optimiser.'
+            )
+
+        # Need upper limit (max increase) column if any compensation flows flagged
+        opt_col = self.input_dataset.sup.optimise_flag_column
+        for scenario, percentile in itertools.product(self.scenarios, self.percentiles):
+            limit_col = self.input_dataset.sup.get_upper_limit_column(scenario, percentile)
+            if limit_col not in self.input_dataset.sup.data.columns:
+                df = self.input_dataset.sup.data
+                if df.loc[df[opt_col] == 1].shape[0] == 0:
+                    self.input_dataset.sup.data[limit_col] = np.nan
+                else:
+                    raise ValueError(
+                        f'Missing max increase column for compensation flow '
+                        f'({limit_col}) in SupResGW table in input Dataset - set '
+                        f'manually.'
+                    )
+
     @staticmethod
     def _modify_dataset(
             scenario: str, percentile: int, model: Model, swabs: SWABS, gwabs: GWABS,
-            ds: Dataset,
+            sup: SupResGW, ds: Dataset,
     ) -> Dataset:
         """
         Return a copy of the Dataset but including optimised abstraction impacts.
 
         Steps involved are:
 
-            - Copy SWABS and GWABS tables
+            - Copy SWABS, GWABS and SupResGW tables
             - Overwrite impact columns
             - Aggregate GWABS to LPP
-            - Merge SWABS and GWABS into dataset tables
+            - Merge SWABS, GWABS and SupResGW into dataset tables
             - Update flows, surplus/deficits and compliance bands using calculator
+
+        The order of SWABS, GWABS and SupResGW tables should align with the order of
+        the solution vector, as the former (tables) come directly out of the data
+        preparation step. An explicit check on order could be added.
 
         Args:
             scenario: Name/abbreviation of artificial influences scenario.
             percentile: Flow percentile (natural).
             model: Instance of Model containing optimised values.
             swabs: Instance of model.SWABS from data preparation.
-            gwabs: Instance of model.SWABS from data preparation.
+            gwabs: Instance of model.GWABS from data preparation.
+            sup: Instance of model.SupResGW from data preparation.
             ds: Subset Dataset from data preparation.
 
         Returns:
@@ -433,9 +482,20 @@ class Optimiser:
         ds1 = deepcopy(ds)
         swabs1 = deepcopy(swabs)
         gwabs1 = deepcopy(gwabs)
+        sup1 = deepcopy(sup)
 
         swabs1.data[swabs1.impact_column] = model.z.value[:model.n_swabs]
         gwabs1.data[gwabs1.impact_column] = model.z.value[model.n_swabs:model.n_abs]
+
+        i = model.n_abs + model.n_flows
+        j = i + model.n_sup_comp
+        sup1.data.loc[sup1.data[sup1.optimise_flag_column] == 1, sup1.impact_column] += (
+            model.z.value[i:j]
+        )
+        k = j + model.n_sup_abs
+        sup1.data.loc[sup1.data[sup1.optimise_flag_column] == 2, sup1.impact_column] = (
+            model.z.value[j:k] * -1
+        )
 
         # Ensure that full lpp-level impact of a gwab is available for the gwabs table
         # (i.e. including impact components located outside of the domain). This can be
@@ -458,7 +518,7 @@ class Optimiser:
         # final tables, as they will come through as nans (whereas they should be either
         # zeros or other non-zero constants)
 
-        # Calculate old vs new swabs differences (lpp)
+        # Merge optimised SWABS and held-constant SWABS (lpp)
         swab_col = ds1.swabs.get_value_column(scenario, percentile)
         df = pd.merge(
             ds1.swabs.data.rename(columns={swab_col: f'{swab_col}_OLD'}),
@@ -468,7 +528,7 @@ class Optimiser:
         df.loc[df[swab_col].isna(), swab_col] = df.loc[df[swab_col].isna(), f'{swab_col}_OLD']
         ds1.swabs.set_data(df.drop(columns=f'{swab_col}_OLD'))
 
-        # Calculate old vs new gwabs differences (lpp)
+        # Merge optimised SWABS and held-constant GWABS (lpp)
         gwab_col = ds1.gwabs.get_value_column(scenario, percentile)
         df = pd.merge(
             ds1.gwabs.data.rename(columns={gwab_col: f'{gwab_col}_OLD'}),
@@ -477,6 +537,16 @@ class Optimiser:
         )
         df.loc[df[gwab_col].isna(), gwab_col] = df.loc[df[gwab_col].isna(), f'{gwab_col}_OLD']
         ds1.gwabs.set_data(df.drop(columns=f'{gwab_col}_OLD'))
+
+        # Merge optimised SupResGW and held-constant SupResGW (lpp)
+        sup_col = ds1.sup.get_value_column(scenario, percentile)
+        df = pd.merge(
+            ds1.sup.data.rename(columns={sup_col: f'{sup_col}_OLD'}),
+            sup1.data[[sup1.impact_column]].rename(columns={sup1.impact_column: sup_col}),
+            how='left', left_index=True, right_index=True,
+        )
+        df.loc[df[sup_col].isna(), sup_col] = df.loc[df[sup_col].isna(), f'{sup_col}_OLD']
+        ds1.sup.set_data(df.drop(columns=f'{sup_col}_OLD'))
 
         calculator = Calculator(
             ds1, scenarios=[scenario], percentiles=[percentile],
@@ -528,58 +598,3 @@ class Optimiser:
         for attr_key, attr_value in ds.__dict__.items():
             ds1.__dict__[attr_key] = attr_value
         return ds1
-
-
-def calculate_mad(
-        output_dataset: OutputDataset, scenario: str, percentile: int,
-) -> float:
-    """
-    Calculate MAD equality metric on proportions fulfilled based on Optimiser output.
-
-    Note that the calculation is currently at the licence-point-purpose level, rather
-    than the licence-level calculation.
-
-    """
-    def get_arrays(df1, df2, value_col):
-        # Return arrays of initial/target abstractions and proportions fulfilled
-        df1 = df1.copy()
-        df2 = df2.copy()
-        df1['__VALUE'] = df1[value_col]
-        df2['__CHANGE'] = df2[value_col]
-
-        df3 = pd.merge(
-            df1[['__VALUE']], df2[['__CHANGE']], how='left', left_index=True,
-            right_index=True,
-        )
-
-        # Nans arise in proportion fulfilled where initial/target abstraction is zero
-        # - exclude these cases
-        df3['__PROP_FULFILLED'] = df3['__VALUE'] / (df3['__VALUE'] - df3['__CHANGE'])
-        df3['__PROP_FULFILLED'] = np.where(
-            ~np.isfinite(df3['__PROP_FULFILLED']), 1.0, df3['__PROP_FULFILLED']
-        )
-        df3 = df3.loc[~((df3['__VALUE'] == 0.0) & (df3['__CHANGE'] == 0.0))]
-
-        return (
-            (df3['__VALUE'] - df3['__CHANGE']).to_numpy(),  # initial/target
-            df3['__PROP_FULFILLED'].to_numpy()  # proportions fulfilled
-        )
-
-    swabs_base, swabs_props = get_arrays(
-        output_dataset.swabs.data, output_dataset.swabs_chg.data,
-        output_dataset.swabs.get_value_column(scenario, percentile),
-    )
-    gwabs_base, gwabs_props = get_arrays(
-        output_dataset.gwabs.data, output_dataset.gwabs_chg.data,
-        output_dataset.gwabs.get_value_column(scenario, percentile),
-    )
-
-    # Overall proportion of target abstraction impact fulfilled at domain scale
-    overall_prop = (
-        (np.sum(swabs_props * swabs_base) + np.sum(gwabs_props * gwabs_base))
-        / (np.sum(swabs_base) + np.sum(gwabs_base))
-    )
-
-    mad = np.mean(np.abs(np.concatenate([swabs_props, gwabs_props]) - overall_prop))
-
-    return mad

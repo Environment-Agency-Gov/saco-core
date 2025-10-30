@@ -747,6 +747,25 @@ class SupResGW_NBB(DataTable):
         """
         return f'{self.variable_abb}{scenario}Q{percentile}'
 
+    def get_upper_limit_column(self, scenario: str, percentile: int) -> str:
+        """
+        Return name of column giving upper limit of allow compensation flow effects.
+
+        This is only relevant if complex impacts are being considered in the Optimiser -
+        specifically complex impacts where increases in reservoir compensation flow are
+        being explored. Otherwise, this column is not required in the tool
+
+        Args:
+            scenario: Name/abbreviation of artificial influences scenario.
+            percentile: Flow percentile (natural).
+
+        Returns:
+             Name of column giving upper limit on potential reservoir compensation flow
+             increase effect.
+
+        """
+        return f'{self.variable_abb}{scenario}Q{percentile}_MAX_INCREASE'
+
     @property
     def name(self) -> str:
         return 'SupResGW_NBB'

@@ -11,11 +11,13 @@ import numpy as np
 import scipy.sparse as sp
 import pandas as pd
 import cvxpy as cp
+import networkx as nx
 
 from .config import Constants
-from .tables import Table
+from .tables import Table, Master
 from .dataset import Dataset, subset_dataset_on_wbs, subset_dataset_on_columns
 from .calculate import Calculator
+from .utils import slices_to_indexes
 
 
 class Flows(Table):
@@ -49,6 +51,10 @@ class Flows(Table):
     @property
     def arc_index_column(self):
         return self.constants.arc_index_column
+
+    @property
+    def qmax_ups_column(self):
+        return 'QMAXups'
 
 
 class GWABS(Table):
@@ -129,9 +135,52 @@ class SWABS(Table):
         return self.constants.arc_index_column
 
 
+class SupResGW(Table):
+    """
+    Input complex impacts.
+
+    """
+    def set_schema(self, *args):
+        pass
+
+    @property
+    def name(self) -> str:
+        return 'SupResGW'
+
+    @property
+    def short_name(self) -> str:
+        return 'sup'
+
+    @property
+    def index_name(self) -> Union[str, List[str]]:
+        return 'UNID'
+
+    @property
+    def waterbody_id_column(self) -> str:
+        return self.constants.waterbody_id_column
+
+    @property
+    def impact_column(self):
+        return 'IMPACT'
+
+    @property
+    def arc_index_column(self):
+        return self.constants.arc_index_column
+
+    @property
+    def optimise_flag_column(self):
+        return 'Optimise_Flag'
+
+    @property
+    def upper_limit_column(self):
+        # Column giving maximum increase to reservoir compensation flow effect
+        return 'UPPER_LIMIT'
+
+
 class DataPreparer:
     """
-    Production of formatted inflows and abstraction impacts (demands) for model.
+    Production of formatted inflows and (primarily) abstraction impacts (demands) for
+    model.
 
     Args:
         ds: Input Dataset.
@@ -162,6 +211,7 @@ class DataPreparer:
         self.flows = Flows()
         self.swabs = SWABS()
         self.gwabs = GWABS()
+        self.sup = SupResGW()
 
         self.subdomain_indices = {}  # to help evaluate equality on subdomains
 
@@ -179,10 +229,10 @@ class DataPreparer:
     def prepare_flows(self):
         """Derive model inflows by modifying natural flow with static impacts."""
 
-        # Set any swabs/gwabs to be optimised to zero - i.e. only retain abs that should
-        # be held constant when modifying natural flows. This gives a set of static
-        # swabs/gwabs that should modify the natural flow (alongside any discharges and
-        # complex impacts that are held constant).
+        # Set any swabs/gwabs to be optimised to zero - i.e. only retain abs
+        # that should be held constant when modifying natural flows. This gives a set
+        # of static swabs/gwabs that should modify the natural flow (alongside any
+        # discharges and complex impacts that are held constant).
         df1 = self.ds.swabs.data.copy()
         value_col = self.ds.swabs.get_value_column(self.scenario, self.percentile)
         df1.loc[df1[self.ds.swabs.optimise_flag_column] == 1, value_col] = 0.0
@@ -191,9 +241,18 @@ class DataPreparer:
         value_col = self.ds.gwabs.get_value_column(self.scenario, self.percentile)
         df2.loc[df2[self.ds.gwabs.optimise_flag_column] == 1, value_col] = 0.0
 
+        # Similar thing for complex impacts, but noting that "type 1" impacts should be
+        # included in the modified natural flow for now, as the effects of changes to
+        # compensation flows are effectively modelled as an additional discharge term
+        # - this is to avoid awkward stuff with signs
+        df3 = self.ds.sup.data.copy()
+        value_col = self.ds.sup.get_value_column(self.scenario, self.percentile)
+        df3.loc[df3[self.ds.sup.optimise_flag_column] == 2, value_col] = 0.0
+
         ds1 = deepcopy(self.ds)
         ds1.swabs.set_data(df1)
         ds1.gwabs.set_data(df2)
+        ds1.sup.set_data(df3)
 
         # Setting capping_method to None would give potentially negative flows if
         # abstractions held constant exceed natural flows + discharges. Instead obtain
@@ -213,18 +272,50 @@ class DataPreparer:
                 'in one or more waterbodies (ups) - should not occur.'
             )
 
+        # Version of flows with max compensation benefits - used below to identify
+        # any unattainable targets
+        upper_limit_col = self.ds.sup.get_upper_limit_column(
+            self.scenario, self.percentile
+        )
+        df4 = self.ds.sup.data.loc[
+            self.ds.sup.data[self.ds.sup.optimise_flag_column] == 1, [upper_limit_col]
+        ].copy()
+        df4 = df4.rename(columns={upper_limit_col: '__UPPER_LIMIT'})
+        ds1.sup.data = pd.merge(
+            ds1.sup.data, df4, how='left', left_index=True, right_index=True,
+        )
+        ds1.sup.data['__UPPER_LIMIT'] = np.where(
+            ~np.isfinite(ds1.sup.data['__UPPER_LIMIT']),
+            0.0,
+            ds1.sup.data['__UPPER_LIMIT']
+        )
+        value_col = self.ds.sup.get_value_column(self.scenario, self.percentile)
+        ds1.sup.data[value_col] += ds1.sup.data['__UPPER_LIMIT']
+        ds1.sup.data = ds1.sup.data.drop(columns='__UPPER_LIMIT')
+        calculator.set_dataset(ds1)
+        ds3 = calculator.run()
+
+        ds3.mt.data = ds3.mt.data.rename(columns={scen_col: f'{scen_col}__MAX'})
+        ds2.mt.data = pd.merge(
+            ds2.mt.data, ds3.mt.data[[f'{scen_col}__MAX']], how='left', left_index=True,
+            right_index=True,
+        )
+
         # Relax flow target if flow target now unattainable
         qt_col = self.ds.mt.get_qt_column(self.scenario, self.percentile)
-        if np.any(ds2.mt.data[scen_col] < ds2.mt.data[qt_col]):
-            _wbs = ds2.mt.data.loc[ds2.mt.data[scen_col] < ds2.mt.data[qt_col]].index.tolist()
+        if np.any(ds2.mt.data[f'{scen_col}__MAX'] < ds2.mt.data[qt_col]):
+            _wbs = ds2.mt.data.loc[
+                ds2.mt.data[f'{scen_col}__MAX'] < ds3.mt.data[qt_col]
+            ].index.tolist()
             _n_wbs = len(_wbs)
             warnings.warn(
                 f'Some flow targets ({_n_wbs}) cannot be met (likely due to static '
                 f'impacts). These targets have been dropped - check outputs and/or set '
-                f'lower targets if desired: {_wbs}'
+                f'lower targets for {self.scenario} Q{self.percentile} if desired: '
+                f'{_wbs}'
             )
             ds2.mt.data[qt_col] = np.where(
-                ds2.mt.data[scen_col] < ds2.mt.data[qt_col],
+                ds2.mt.data[f'{scen_col}__MAX'] < ds2.mt.data[qt_col],
                 0.0,
                 ds2.mt.data[qt_col]
             )
@@ -232,7 +323,7 @@ class DataPreparer:
         df = self.format_flows(ds2.mt)
         self.flows.set_data(df)
 
-    def format_flows(self, mt):
+    def format_flows(self, mt: Master):
         """Helper method to format inflows for Flows table."""
 
         scen_sub_col = mt.get_scen_column(
@@ -241,24 +332,27 @@ class DataPreparer:
         scen_ups_col = mt.get_scen_column(
             self.scenario, self.percentile, self.constants.ups_abb,
         )
+        scen_ups_max_col = f'{scen_ups_col}__MAX'
         qt_col = mt.get_qt_column(self.scenario, self.percentile)
 
-        df = mt.data[[scen_sub_col, scen_ups_col, qt_col]].copy()
+        df = mt.data[[scen_sub_col, scen_ups_col, scen_ups_max_col, qt_col]].copy()
         df = df.rename(columns={
             scen_sub_col: self.flows.get_qmod_column(self.constants.sub_abb),
             scen_ups_col: self.flows.get_qmod_column(self.constants.ups_abb),
+            scen_ups_max_col: self.flows.qmax_ups_column,
             qt_col: self.flows.qt_column,
         })
 
         return df
 
-    def filter_abstractions(self):
-        """Filter abstractions tables to just those rows to be optimised."""
+    def filter_influences(self):
+        """Filter artificial influences tables to just those rows to be optimised."""
 
         ds1 = self.ds
 
         # Need to retain metadata columns and just the (one) relevant value column
         # - greater than zero check should avoid trying to optimise pseudo-discharges
+        #   in swabs/gwabs tables
         df1 = ds1.swabs.data.loc[ds1.swabs.data[ds1.swabs.optimise_flag_column] == 1]
         value_col = ds1.swabs.get_value_column(self.scenario, self.percentile)
         cols_to_omit = [c for c in ds1.swabs.value_columns if c != value_col]
@@ -269,13 +363,24 @@ class DataPreparer:
         cols_to_omit = [c for c in ds1.gwabs.value_columns if c != value_col]
         df2 = df2.loc[df2[value_col] > 0.0, ~df2.columns.isin(cols_to_omit)].copy()
 
-        if (df1.shape[0] == 0) and (df2.shape[0] == 0):
-            raise ValueError('No abstraction impacts to optimise.')
+        # For complex impacts also need to retain the flag column (not just binary in
+        # this case) and the column indicating the upper limit on compensation
+        df3 = ds1.sup.data.loc[ds1.sup.data[ds1.sup.optimise_flag_column] > 0]
+        value_col = ds1.sup.get_value_column(self.scenario, self.percentile)
+        upper_limit_col = ds1.sup.get_upper_limit_column(self.scenario, self.percentile)
+        df3 = df3[[
+            ds1.sup.waterbody_id_column, value_col, ds1.sup.optimise_flag_column,
+            upper_limit_col,
+        ]]
+
+        if (df1.shape[0] == 0) and (df2.shape[0] == 0) and (df3.shape[0] == 0):
+            raise ValueError('No artificial influences to optimise.')
 
         self.ds_opt = deepcopy(self.ds)
 
         self.ds_opt.swabs.set_data(df1)
         self.ds_opt.gwabs.set_data(df2)
+        self.ds_opt.sup.set_data(df3)
 
     def prepare_gwabs(self):
         """
@@ -378,6 +483,33 @@ class DataPreparer:
 
         self.swabs.set_data(df)
 
+    def prepare_supresgw(self):
+        """Form SupResGW (complex) impacts table."""
+
+        waterbody_col = self.ds_opt.sup.waterbody_id_column
+        value_col = self.ds_opt.sup.get_value_column(self.scenario, self.percentile)
+        upper_limit_col = self.ds_opt.sup.get_upper_limit_column(
+            self.scenario, self.percentile,
+        )
+        optimise_flag_col = self.ds_opt.sup.optimise_flag_column
+
+        df = self.ds_opt.sup.data.loc[
+            self.ds_opt.sup.data[optimise_flag_col] > 0,
+            [waterbody_col, value_col, optimise_flag_col, upper_limit_col]
+        ].copy()
+
+        df = df.rename(columns={
+            waterbody_col: self.sup.waterbody_id_column,
+            value_col: self.sup.impact_column,
+            upper_limit_col: self.sup.upper_limit_column,
+            optimise_flag_col: self.sup.optimise_flag_column,
+        })
+        df.index.name = self.sup.index_name
+
+        df = df.sort_values(optimise_flag_col)
+
+        self.sup.set_data(df)
+
     def define_index(self):
         """Define master index of all model elements (flows and abstractions)."""
 
@@ -386,6 +518,7 @@ class DataPreparer:
         n_swabs = self.swabs.data.shape[0]
         n_gwabs = self.gwabs.data.shape[0]
         n_flows = self.flows.data.shape[0]
+        n_sup = self.sup.data.shape[0]
 
         i0 = 0
         self.swabs.data[index_col] = np.arange(n_swabs, dtype=int)
@@ -393,6 +526,8 @@ class DataPreparer:
         self.gwabs.data[index_col] = np.arange(i0, i0 + n_gwabs, dtype=int)
         i0 += n_gwabs
         self.flows.data[index_col] = np.arange(i0, i0 + n_flows, dtype=int)
+        i0 += n_flows
+        self.sup.data[index_col] = np.arange(i0, i0 + n_sup, dtype=int)
 
     def identify_subdomains(self):
         """
@@ -400,7 +535,7 @@ class DataPreparer:
 
         Sets *subdomain_indices*  dictionary attribute with:
 
-            - All abstractions in a subdomain.
+            - All (modifiable) abstractions in a subdomain.
             - Just those abstractions needed to evaluate equality (point-scale
               initially) - i.e. to avoid duplication of GWABS impacting multiple
               waterbodies.
@@ -412,6 +547,9 @@ class DataPreparer:
         Note that only subdomains with non-zero demand are included here - i.e. any with
         zero demand are just ignored.
 
+        Complex abstractions are included, but other complex impacts are currently
+        excluded (i.e. compensation flows - not yet evaluating equality etc for these).
+
         """
         outlet_wbs = self.ds.find_outlet_waterbodies()
         outlet_wbs = [wb for wb in outlet_wbs if wb in self.ds.wbs.data.index]
@@ -421,14 +559,20 @@ class DataPreparer:
             wbs = self.ds.identify_upstream_waterbodies(wb)
 
             # All abstractions per subdomain
+            # - i.e. including complex abstractions, but excluding compensation flows
             swabs = self.swabs.data.loc[
                 self.swabs.data[self.swabs.waterbody_id_column].isin(wbs)
             ]
             gwabs = self.gwabs.data.loc[
                 self.gwabs.data[self.gwabs.waterbody_id_column].isin(wbs)
             ]
+            sup = self.sup.data.loc[
+                (self.sup.data[self.sup.waterbody_id_column].isin(wbs))
+                & (self.sup.data[self.sup.optimise_flag_column] == 2)
+            ]
             indices = swabs[self.swabs.arc_index_column].tolist()
             indices.extend(gwabs[self.gwabs.arc_index_column].tolist())
+            indices.extend(sup[self.sup.arc_index_column].tolist())
 
             if len(indices) > 0:
                 subdomain_wbs.append(wb)
@@ -452,6 +596,7 @@ class DataPreparer:
 
                 indices = swabs[self.swabs.arc_index_column].tolist()
                 indices.extend(gwabs[self.gwabs.arc_index_column].tolist())
+                indices.extend(sup[self.sup.arc_index_column].tolist())
                 self.subdomain_indices[('unique-abstractions', wb)] = indices
 
         self.subdomain_indices['waterbody-list'] = subdomain_wbs
@@ -468,32 +613,39 @@ class DataPreparer:
                   impacts) as an instance of Flows table.
                 - 'swabs-table': Formatted surface water abstraction impacts (demand)
                   as an instance of SWABS table.
-                - 'gwabs-table': Formatted grounwater abstraction impacts (demand) as
-                  an instance of SWABS table.
+                - 'gwabs-table': Formatted groundwater abstraction impacts (demand) as
+                  an instance of GWABS table.
+                - 'supresgw-table': Formatted complex impacts as an instance of SupResGW
+                  table.
                 - 'subdomain-dicts': Helper for calculating equality metrics per
-                  subomain.
+                  subdomain.
 
         """
         self.filter_supresgw()
         self.prepare_flows()
-        self.filter_abstractions()
+        self.filter_influences()
         self.prepare_gwabs()
         self.prepare_swabs()
+        self.prepare_supresgw()
 
         # Check again that something to optimise - possible for gwabs to pass through
         # filter_abstractions but then end up with no relevant impacts left after
         # waterbody splits considered in prepare_gwabs
-        if (self.swabs.data.shape[0] == 0) and (self.gwabs.data.shape[0] == 0):
-            raise ValueError('No abstraction impacts to optimise.')
+        if (
+                (self.swabs.data.shape[0] == 0) and (self.gwabs.data.shape[0] == 0)
+                and (self.sup.data.shape[0] == 0)
+        ):
+            raise ValueError('No artificial influence impacts to optimise.')
 
         self.define_index()
         self.identify_subdomains()
 
         self.formatted_data = {
-            'subset-dataset': self.ds,  # includes all swabs/gwabs, not just those to be optimised
+            'subset-dataset': self.ds,  # includes all influences, not just those to be optimised
             'flows-table': self.flows,
             'swabs-table': self.swabs,
             'gwabs-table': self.gwabs,
+            'supresgw-table': self.sup,
             'subdomain-dicts': self.subdomain_indices,
         }
 
@@ -508,7 +660,8 @@ class ArrayBuilder:
         flows: Instance of Flows table containing inflows (natural flows adjusted for
             static impacts).
         swabs: Instance of SWABS table containing surface water abstractions (demands).
-        gwabs: Instance of SWABS table containing surface water abstractions (demands).
+        gwabs: Instance of GWABS table containing groundwater abstractions (demands).
+        supresgw: Instance of SupResGW table containing complex impacts.
         graph: Directed graph of waterbody network.
         subdomain_indices: Helper for calculating equality metrics for subdomains.
         raise_external_hof_error: Whether to raise error if waterbody on which a HOF
@@ -518,13 +671,14 @@ class ArrayBuilder:
 
     """
     def __init__(
-            self, flows: Flows, swabs: SWABS, gwabs: GWABS, graph,
-            subdomain_indices: Dict, raise_external_hof_error: bool,
+            self, flows: Flows, swabs: SWABS, gwabs: GWABS, supresgw: SupResGW,
+            graph: nx.DiGraph, subdomain_indices: Dict, raise_external_hof_error: bool,
             constants: Constants = None,
     ):
         self.flows = flows
         self.swabs = swabs
         self.gwabs = gwabs
+        self.sup = supresgw
         self.graph = graph
         self.subdomain_indices = subdomain_indices
         self.raise_external_hof_error = raise_external_hof_error
@@ -554,7 +708,19 @@ class ArrayBuilder:
         self.n_gwabs = self.gwabs.data.shape[0]
         self.n_flows = self.flows.data.shape[0]
         self.n_abs = self.n_swabs + self.n_gwabs
-        self.n_arcs = self.n_abs + self.n_flows
+        self.n_sup = self.sup.data.shape[0]
+
+        self.n_sup_comp = self.sup.data.loc[
+            self.sup.data[self.sup.optimise_flag_column] == 1
+        ].shape[0]
+        self.n_sup_abs = self.sup.data.loc[
+            self.sup.data[self.sup.optimise_flag_column] == 2
+        ].shape[0]
+        self.n_sup_dis = self.sup.data.loc[
+            self.sup.data[self.sup.optimise_flag_column] == 3
+        ].shape[0]
+
+        self.n_arcs = self.n_abs + self.n_flows + self.n_sup
         self.n_subdomains = len(self.subdomain_indices['waterbody-list'])
 
         # Dictionaries returned by run method
@@ -573,14 +739,27 @@ class ArrayBuilder:
 
         """
         self.A_1 = sp.eye(self.n_arcs, format='csr')
-        self.A_1.data[self.n_abs:] = -1
+        i1 = self.n_abs + self.n_flows
+        self.A_1.data[self.n_abs:i1] = -1
 
         self.b_1 = np.zeros(self.n_arcs)
         self.b_1[:self.n_swabs] = self.swabs.data[self.swabs.impact_column].to_numpy()
         self.b_1[self.n_swabs:self.n_abs] = self.gwabs.data[
             self.gwabs.impact_column
         ].to_numpy()
-        self.b_1[-self.n_flows:] = -self.flows.data[self.flows.qt_column].to_numpy()
+        self.b_1[self.n_abs:i1] = -self.flows.data[self.flows.qt_column].to_numpy()
+
+        i2 = i1 + self.n_sup_comp
+        self.b_1[i1:i2] = self.sup.data.loc[
+            self.sup.data[self.sup.optimise_flag_column] == 1,
+            self.sup.upper_limit_column
+        ].to_numpy()
+
+        i3 = i2 + self.n_sup_abs
+        self.b_1[i2:i3] = self.sup.data.loc[
+            self.sup.data[self.sup.optimise_flag_column] == 2,
+            self.sup.impact_column
+        ].to_numpy() * -1
 
     def construct_mass_balance_arrays(self):
         """
@@ -608,6 +787,20 @@ class ArrayBuilder:
             gwabs = self.gwabs.data.loc[self.gwabs.data[waterbody_col] == waterbody]
             for j in gwabs[arc_index_col]:
                 self.A_2[i, j] = 1
+
+            for sup_type in [1, 2]:
+                if sup_type == 1:  # compensation
+                    value = -1
+                elif sup_type == 2:  # abstraction
+                    value = 1
+                else:
+                    raise ValueError(f'Unknown complex impact flag value: {sup_type}')
+                sup = self.sup.data.loc[
+                    (self.sup.data[self.sup.optimise_flag_column] == sup_type)
+                    & (self.sup.data[waterbody_col] == waterbody)
+                ]
+                for j in sup[arc_index_col]:
+                    self.A_2[i, j] = value
 
             # Outflow occurs at the arc_index of the waterbody itself
             self.A_2[i, int(row[arc_index_col])] = 1
@@ -710,6 +903,11 @@ class ArrayBuilder:
         """
         self.c = np.zeros(self.n_arcs)
         self.c[:self.n_abs] = -1
+        i = self.n_abs + self.n_flows
+        j = self.n_abs + self.n_flows + self.n_sup_comp
+        self.c[i:j] = 1e9
+        k = j + self.n_sup_abs
+        self.c[j:k] = -1
 
     def construct_hof_arrays(self):
         """
@@ -800,9 +998,20 @@ class ArrayBuilder:
         j = self.n_swabs + self.n_gwabs
         self.m[i:j] = self.gwabs.data[self.gwabs.impact_column].to_numpy()
 
-        self.m[j:] = self.flows.data[
-            self.flows.get_qmod_column(self.constants.ups_abb)
-        ].to_numpy()  # ups flow
+        k = j + self.n_flows
+        self.m[j:k] = self.flows.data[self.flows.qmax_ups_column].to_numpy()
+
+        m = k + self.n_sup_comp
+        self.m[k:m] = self.sup.data.loc[
+            self.sup.data[self.sup.optimise_flag_column] == 1,
+            self.sup.upper_limit_column
+        ].to_numpy()  # this should be positive - working with max change (increase)
+
+        n = m + self.n_sup_abs
+        self.m[m:n] = self.sup.data.loc[
+            self.sup.data[self.sup.optimise_flag_column] == 2,
+            self.sup.impact_column
+        ].to_numpy() * -1  # abstraction negative in supresgw hence flip sign
 
     def find_indexes_of_unique_abstractions(self):
         """
@@ -823,6 +1032,7 @@ class ArrayBuilder:
         only used for equality calcs...).
 
         """
+        # TODO: Could this method be rationalised with those generating s and t?
         gwabs_indexes = self.gwabs.data.groupby(
             self.gwabs.data.index.get_level_values(0)
         )[self.constants.arc_index_column].min().to_numpy()
@@ -836,8 +1046,13 @@ class ArrayBuilder:
                 'Not yet handled the case where the first-impacted waterbody of a gwab '
                 'has zero proportion of the total impact.'
             )
+        sup_indexes = self.sup.data.loc[
+            self.sup.data[self.sup.optimise_flag_column] == 2,
+            self.constants.arc_index_column
+        ].to_numpy()
         self.r = np.concatenate([
-            self.swabs.data[self.constants.arc_index_column].to_numpy(), gwabs_indexes
+            self.swabs.data[self.constants.arc_index_column].to_numpy(), gwabs_indexes,
+            sup_indexes,
         ])
 
     def construct_abstraction_subdomain_array(self):
@@ -901,7 +1116,9 @@ class ArrayBuilder:
 
         self.counts = {
             'n_swabs': self.n_swabs, 'n_gwabs': self.n_gwabs, 'n_flows': self.n_flows,
-            'n_abs': self.n_abs, 'n_arcs': self.n_arcs,
+            'n_abs': self.n_abs, 'n_arcs': self.n_arcs, 'n_sup': self.n_sup,
+            'n_sup_comp': self.n_sup_comp, 'n_sup_abs': self.n_sup_abs,
+            'n_sup_dis': self.n_sup_dis,
         }
 
         return self.arrays, self.counts
@@ -1024,9 +1241,13 @@ class Model:
         self.n_flows = counts['n_flows']
         self.n_abs = counts['n_abs']
         self.n_arcs = counts['n_arcs']
+        self.n_sup = counts['n_sup']
+        self.n_sup_comp = counts['n_sup_comp']
+        self.n_sup_abs = counts['n_sup_abs']
+        self.n_sup_dis = counts['n_sup_dis']
 
         # cvxpy "variables"
-        self.w = cp.Variable(self.n_abs)  # helper for vectorised equality objective
+        self.w = cp.Variable(self.n_abs + self.n_sup_abs)  # helper for vectorised equality objective
         self.y = cp.Variable(self.n_arcs, boolean=True)  # for hofs
         self.z = cp.Variable(self.n_arcs)  # "final" decision vector (all flows, abstractions)
 
@@ -1046,10 +1267,11 @@ class Model:
 
         self.metrics = Metrics()
 
-        # ---
-        epsilon = 1e-2
-        self.v = 1.0 / (np.abs(self.m[:self.n_abs]) + epsilon)
-        # ---
+        # Used in minimum changes pseudo-objective
+        i = self.n_abs + self.n_flows + self.n_sup_comp
+        j = i + self.n_sup_abs
+        abs_idx = slices_to_indexes([(0, self.n_abs), (i, j)])
+        self.v = 1.0 / (np.abs(self.m[abs_idx]) + 1e-2)
 
     def initialise_constraints(self):
         """
@@ -1089,7 +1311,7 @@ class Model:
                     self.z[self.q] - cp.multiply(self.y[self.p == 1], self.h) >= 0,
                 ])
 
-        elif self.objective_type == 'max-point-equality':
+        elif self.objective_type in ['max-point-equality', 'min-n-changes']:
             # Technically no need to place the same upper bound limit on arc flows if
             # not modelling HOFs explicitly under this objective (i.e. taking y as
             # known from solving max-abstraction objective before trying to solve for
@@ -1108,15 +1330,6 @@ class Model:
                     self.h[self.aux.y[self.p == 1] == 0] = 0
                 self.constraints.append(self.z[self.q] - self.h >= 0)
 
-        # ---
-        elif self.objective_type == 'min-n-changes':
-            if np.sum(self.m[self.p == 1]) > 0.0:
-                if np.sum(self.aux.y == 0) > 0:
-                    self.constraints.append(self.z[self.aux.y == 0] == 0)
-                    self.h[self.aux.y[self.p == 1] == 0] = 0
-                self.constraints.append(self.z[self.q] - self.h >= 0)
-        # ---
-
         else:
             raise ValueError(f'Unknown objective type: {self.objective_type}')
 
@@ -1126,14 +1339,20 @@ class Model:
 
         """
         if 'max-abstraction' in self.special_constraints:
+            i = self.n_abs + self.n_flows + self.n_sup_comp
+            j = i + self.n_sup_abs
             self.constraints.append(
-                cp.sum(self.z[:self.n_abs]) == self.aux.domain_total_abstraction
+                (cp.sum(self.z[:self.n_abs]) + cp.sum(self.z[i:j]))
+                == self.aux.domain_total_abstraction
             )
-        if 'max-point-equality' in self.special_constraints:
+        if (
+            ('max-point-equality' in self.special_constraints)
+            or ('min-n-changes' in self.special_constraints)
+        ):
             # Under the current sequential two-objective setup, only the first objective
             # could become a constraint for the second objective. It may not make sense
-            # for max-point-equality to be the first objective and so potentially become
-            # a constraint on a second objective. Refer to the formulation for the
+            # for e.g. max-point-equality to be the first objective and so potentially
+            # become a constraint on a second objective. Refer to the formulation for the
             # objective if this changes though.
             raise NotImplementedError
 
@@ -1148,18 +1367,31 @@ class Model:
         proportion) is evaluated per subdomain and then aggregated to form the final
         objective. Note that the target proportion varies per subdomain.
 
+        Increasing compensation flow has a large cost (penalty) in the current
+        formulation. Otherwise, it would typically just go to its maximum permitted
+        increase, which could just be entered directly as a dataset change prior to
+        optimisation. (Giving compensation flow the same (unit) cost as abstraction but
+        opposite sign would presumably just lead to ambiguity, especially while
+        compensation flow is not covered by equality metrics etc.)
+
         """
         if self.objective_type == 'max-abstraction':
+            # cost of compensation increase included in vector c
             self.objective = cp.Minimize(self.c.T @ self.z)
 
         elif self.objective_type == 'max-point-equality':
-            self.T = sp.csr_matrix(self.t[:, :self.n_abs])
+            # Includes complex abstractions, but not compensation flows
+            i = self.n_abs + self.n_flows + self.n_sup_comp
+            j = i + self.n_sup_abs
+            abs_idx = slices_to_indexes([(0, self.n_abs), (i, j)])
+
+            self.T = sp.csr_matrix(self.t[:, abs_idx])
             self.Ti = self.T.indices
-            g = np.asarray(self.t[:, :self.n_abs].argmax(axis=0)).ravel()
+            g = np.asarray(self.t[:, abs_idx].argmax(axis=0)).ravel()
             self.p_per_node = self.aux.subdomain_proportions_fulfilled[g]
 
-            self.inv_m = 1.0 / self.m[:self.n_abs]
-            self.z_norm = cp.multiply(self.inv_m, self.z[:self.n_abs])
+            self.inv_m = 1.0 / self.m[abs_idx]
+            self.z_norm = cp.multiply(self.inv_m, self.z[abs_idx])
 
             self.constraints += [self.w >= self.z_norm - self.p_per_node]
             self.constraints += [self.w >= -(self.z_norm - self.p_per_node)]
@@ -1171,18 +1403,29 @@ class Model:
             self.sum_w_per_sub = self.T @ self.w
             self.mean_w_per_sub = cp.multiply(self.inv_row_counts, self.sum_w_per_sub)
 
-            self.objective = cp.Minimize(cp.sum(self.mean_w_per_sub) / self.T.shape[0])
+            i0 = self.n_abs + self.n_flows
+            i1 = i0 + self.n_sup_comp
+            self.objective = cp.Minimize(
+                cp.sum(self.mean_w_per_sub) / self.T.shape[0]
+                + cp.sum(cp.multiply(self.z[i0:i1], 1e9))
+            )
 
-        # ---
         elif self.objective_type == 'min-n-changes':
+            # Includes complex abstractions, but not compensation flows
+            i = self.n_abs + self.n_flows + self.n_sup_comp
+            j = i + self.n_sup_abs
+            abs_idx = slices_to_indexes([(0, self.n_abs), (i, j)])
+
+            i0 = self.n_abs + self.n_flows
+            i1 = i0 + self.n_sup_comp
             self.objective = cp.Minimize(
                 cp.sum(
                     cp.multiply(
-                        self.v, cp.abs(self.z[:self.n_abs] - self.m[:self.n_abs])
+                        self.v, cp.abs(self.z[abs_idx] - self.m[abs_idx])
                     )
                 )
+                + cp.sum(cp.multiply(self.z[i0:i1], 1e9))
             )
-        # ---
 
         else:
             raise ValueError(f'Unknown objective type: {self.objective_type}')
@@ -1204,9 +1447,13 @@ class Model:
 
     def set_metrics(self):
         """Evaluate metrics and assign to metrics (dataclass) attribute."""
-        self.metrics.domain_total_abstraction = np.sum(self.z.value[:self.n_abs])
+        i = self.n_abs + self.n_flows + self.n_sup_comp
+        j = i + self.n_sup_abs
+        abs_idx = slices_to_indexes([(0, self.n_abs), (i, j)])
+
+        self.metrics.domain_total_abstraction = np.sum(self.z.value[abs_idx])
         self.metrics.domain_proportion_fulfilled = (
-                self.metrics.domain_total_abstraction / np.sum(self.m[:self.n_abs])
+                self.metrics.domain_total_abstraction / np.sum(self.m[abs_idx])
         )
         self.metrics.domain_point_mad = np.mean(np.abs(
             self.z.value[self.r] / self.m[self.r]
@@ -1221,10 +1468,10 @@ class Model:
             - self.metrics.domain_proportion_fulfilled
         ))
 
-        z = self.z.value[:self.n_abs]
-        y = self.m[:self.n_abs]
+        z = self.z.value[abs_idx]
+        y = self.m[abs_idx]
         p = self.metrics.subdomain_proportions_fulfilled
-        t = self.t[:, :self.n_abs]
+        t = self.t[:, abs_idx]
         self.metrics.subdomain_point_mad = (
             np.abs((z / y - p[:, None]) * t).sum(axis=1) / t.sum(axis=1)
         )
