@@ -1179,6 +1179,9 @@ def concatenate_datasets(
     influences but different value columns (scenario and percentile combinations). The
     method assumes that input datasets do not contain "overlapping" value columns.
 
+    For SWABS_NBB and GWABs_NBB, any long-term average columns will be taken from the
+    first Dataset listed in the *datasets* argument (for each scenario).
+
     Args:
         datasets: Datasets to concatenate.
         tables_to_skip: Tables for which concatenation should not be attempted. These
@@ -1201,9 +1204,18 @@ def concatenate_datasets(
         percentiles.append(ds.percentiles[0])
 
         for table in ds.tables:
-            if table.name not in tables_to_skip:
+            if (table.name in tables_to_skip) or (table.data is None):
+                pass
+            else:
+                candidate_cols = [col for col in table.value_columns]
+
+                if table.name in ['SWABS_NBB', 'GWABs_NBB']:
+                    for scenario in scenarios:
+                        lta_col = table.get_lta_column(scenario)
+                        candidate_cols.append(lta_col)
+
                 merge_cols = []
-                for col in table.value_columns:
+                for col in candidate_cols:
                     if col not in ds1.get_table(table.name).data.columns:
                         merge_cols.append(col)
 
