@@ -1092,7 +1092,17 @@ class IntegratedWBs_NBB(Table):
             {
                 self.downstream_waterbody_column: pa.Column(str),
                 self.waterbody_type_column: pa.Column(str),
-                self.basin_column: pa.Column(str),
+
+                # Additional metadata columns (non-essential)
+                'RBD_NAME': pa.Column(str, required=False),  # river basin district
+                'AREA_NAME': pa.Column(str, required=False),  # EA area
+                'CATCHMENT': pa.Column(str, required=False),  # WRGIS catchment
+                'Ledger_Are': pa.Column(str, required=False),  # ledger area
+                'Outflowx': pa.Column(float, required=False),  # outflow x coordinate (BNG)
+                'OutflowY': pa.Column(float, required=False),  # outflow y coordinate (BNG)
+                'UpsArea_m2': pa.Column(float, required=False),  # upstream area to outlet (m^2)
+                'XCent': pa.Column(float, required=False),  # centroid x coordinate (BNG)
+                'Ycent': pa.Column(float, required=False),  # centroid y coordinate (BNG)
             },
             index=pa.Index(
                 str, unique=unique_index, name=self.index_name,
@@ -1121,11 +1131,6 @@ class IntegratedWBs_NBB(Table):
     def waterbody_type_column(self) -> str:
         """Name of column indicating waterbody type."""
         return 'Type_IWB'
-
-    @property
-    def basin_column(self) -> str:
-        """Name of column indicating river basin district of waterbody."""
-        return 'RBD_NAME'
 
     @property
     def unassessed_types(self) -> List[str]:
