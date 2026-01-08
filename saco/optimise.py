@@ -103,6 +103,8 @@ class Optimiser:
             derive changes (i.e. for inference of required impact reductions after
             optimisation conducted). Default (None) is not to use this argument (and
             derive changes relative to input_dataset).
+        lta_base_percentile: Flow percentile (natural) to use when inferring long-term
+            average abstraction (after optimisation complete).
         infeasible_targets_method: Approach to use to infeasible flow targets: either
             'drop' entirely or 'relax' to maximum feasible flow.
         constants: Global constants defined by default in config.Constants.
@@ -124,9 +126,6 @@ class Optimiser:
         are held constant (i.e. not available for the Optimiser to change). Currently,
         discharges (Discharges_NBB) and complex impacts (SupResGW_NBB) are held constant.
         A user may specify that certain rows in SWABS_NBB and GWABs_NBB should also be
-        left alone. If a target cannot feasibly be met, the Optimiser drops the target
-        and provides a warning to the user, so that they can reconsider the setup if need
-        be.
         left alone. If a target cannot feasibly be met, by default the Optimiser drops
         the target and provides a warning to the user, so that they can reconsider the
         setup if need be. However, the ``infeasible_targets_method`` argument can also
@@ -156,6 +155,7 @@ class Optimiser:
             raise_external_hof_error: bool = False,
             primary_relaxation_factor: float = None,
             reference_dataset: Dataset = None,
+            lta_base_percentile: int = 95,
             infeasible_targets_method: str = 'drop',
             constants: Constants = None,
     ):
