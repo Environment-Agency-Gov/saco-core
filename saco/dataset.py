@@ -695,6 +695,74 @@ class Dataset:
         else:
             self.sup.data[self.sup.optimise_flag_column] = 0
 
+    def infer_mean_abstraction(
+            self, scenario: str = 'FL', percentile: int = 95,
+            exclude_swabs_with_hofs: bool = True, exclude_gwabs: List[str] = None,
+            exclude_swabs: List[str] = None,
+    ):
+        """
+        Infer mean abstraction from impacts under a given scenario and percentile.
+
+        Args:
+            scenario: Abbreviation of artificial influences scenario used as basis for
+                inferring long-term average abstraction.
+            percentile: Flow percentile (natural) used as basis for inferring long-term
+                average abstraction.
+            exclude_swabs_with_hofs: Whether to exclude SWABS with HOFs from long-term
+                average calculations.
+            exclude_gwabs: Groundwater abstractions whose long-term average should not
+                be inferred. List should contain entries from UNIQUEID in GWABs_NBB.
+            exclude_swabs: Surface water abstractions whose long-term average should not
+                be inferred. List should contain entries from UNIQUEID in SWABS_NBB.
+
+        Notes:
+
+            WRGIS models the relationships between long-term average abstraction and
+            impacts at different flow percentiles. Here we use these relationships to
+            estimate long-term average abstraction given impacts at specific (single)
+            flow percentile. This is done under an assumption that the relative
+            seasonal/FDC profile of impacts remains constant.
+
+            The impact under a given scenario/percentile combination includes the
+            effect of local consumptiveness. The long-term average numbers calculated
+            using this method *exclude* local consumptiveness. This is reflected by the
+            "WR" vs "NR" suffixes in the impact numbers for a specific percentile (WR =
+            "water returned") vs the long-term average abstraction numbers (NR = "no
+            water returned").
+
+            Lists of abstractions to be excluded from long-term average calculations can
+            be supplied via the exclude_gwabs and exclude_swabs arguments. Abstractions
+            to be excluded should be specified using their UNIQUEID. If a long-term
+            average column is already present before this method is called, the existing
+            value will be retained. If not, a NaN will be inserted for these
+            abstractions.
+
+            This method operates only for the SWABS_NBB and GWABs_NBB tables. Complex
+            abstractions/impacts in the SupResGW_NBB table are not handled. By default,
+            SWABS with HOFs are excluded from long-term average calculations (see
+            ``exclude_swabs_with_hofs`` argument). This is because the method may not
+            yield a reasonable long-term average abstraction if the impact in SWABS_NBB
+            at the reference percentile is being constrained by the HOF condition.
+
+            For example, a SWAB might be "off" at Q95 due to a HOF condition. However,
+            it might well be unreasonable for its long-term average to become zero.
+            Hence it is not appropriate to apply the seasonal disaggregation factors to
+            obtain a revised long-term average in this case.
+
+        """
+        if exclude_gwabs is None:
+            exclude_gwabs = []
+        if exclude_swabs is None:
+            exclude_swabs = []
+
+        if self.gwabs.data.shape[0] > 0:
+            self.gwabs.infer_mean_abstraction(scenario, percentile, exclude_gwabs)
+
+        if self.swabs.data.shape[0] > 0:
+            self.swabs.infer_mean_abstraction(
+                scenario, percentile, self.sfac, exclude_swabs_with_hofs, exclude_swabs,
+            )
+
     def _calculate_flow_targets(
             self, overall_target: str, use_fix_flags_table: bool = True,
             custom_targets: Dict = None,
