@@ -13,6 +13,11 @@ The SACO tool aims to help identify potential ways to meet environmental flow ta
 in Water Framework Directive (WFD) surface waterbodies. It has been developed by the
 Environment Agency (England).
 
+See the `release notes`_ in the repository for details of changes between package
+versions.
+
+.. _release notes: https://github.com/Environment-Agency-Gov/saco-core/releases
+
 
 .. toctree::
    :maxdepth: 1

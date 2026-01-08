@@ -65,17 +65,26 @@ ASBPercentages
 
 Discharges_NBB
     - UNID: *Unique ID (index column)*
-    - DISCHRA: *Discharge impact under RA scenario [Ml/d]*
-    - DISCHFL: *Discharge impact under FL scenario [Ml/d]*
-    - DISCHFP: *Discharge impact under FP scenario [Ml/d]*
-    - EA_WB_ID: *Impacted waterbody ID*
-    - DISNUMBER: *Consent number*
-    - SITENAME: *Site name*
     - CONSHOLDER: *Consent holder name*
+    - DISCH{S}: *Discharge impact under scenario {S} [Ml/d]*
+    - DISNUMBER: *Consent number*
+    - EA_WB_ID: *Impacted waterbody ID*
+    - SITENAME: *Site name*
 
 GWABs_NBB
     - UNIQUEID: *Unique ID (index column)*
     - EA_WB_ID: *ID of waterbody containing impact point*
+    - GWLTA{S}NR: *Long-term average abstraction (no local returns) under scenario {S}
+      [Ml/d]*
+    - GWPROPCONS: *Abstraction consumptiveness [-]*
+    - GWQ{P}{S}WR: *Total abstraction impact at flow percentile {P} under scenario {S}
+      (accounting for local consumptiveness) [Ml/d]*
+    - IMPFAC: *Factor/flag used in seasonal apportionment of impacts*
+    - LICHOLDER: *Licence holder*
+    - LICNUMBER: *Licence number*
+    - LICN_EXPD: *Licence expiry date or flag (D for deregulated)*
+    - PURPCODE: *Abstraction purpose code*
+    - SITENAME: *Site name*
     - WB_1ST: *First waterbody receiving impact*
     - WB_2ND: *Second waterbody receiving impact*
     - WB_3RD: *Third waterbody receiving impact*
@@ -86,83 +95,102 @@ GWABs_NBB
     - WB_3RD_PRO: *Percentage of total impact received by WB_3RD [%]*
     - WB_4TH_PRO: *Percentage of total impact received by WB_4TH [%]*
     - WB_5TH_PRO: *Percentage of total impact received by WB_5TH [%]*
-    - GWQ{P}{S}WR: *Total abstraction impact at flow percentile {P} under scenario {S}
-      (accounting for local consumptiveness) [Ml/d]*
-    - LICN_EXPD: Licence expiry date or flag (D for deregulated)
-    - LICNUMBER: *Licence number*
-    - SITENAME: *Site name*
-    - PURPCODE: *Abstraction purpose code*
-    - LICHOLDER: *Licence holder*
-    - FLPTPANQM3: *Point-purpose annual quantity under FL scenario [m^3]*
-    - RAPTPANQM3: *Point-purpose annual quantity under RA scenario [m^3]*
-    - GWPROPCONS: *Abstraction consumptiveness [-]*
-    - IMPFAC: *Factor/flag used in seasonal apportionment of impacts*
 
 IntegratedWBs_NBB
     - EA_WB_ID: *Waterbody ID (index column)*
+    - AREA_NAME: *EA area name*
+    - CATCHMENT: *Catchment (WRGIS boundaries/definitions)*
     - DSTREAM_WB: *ID of next waterbody (downstream)*
-    - Type_IWB: *Waterbody type*
+    - Ledger_Are: *EA ledger area*
+    - Outflowx: *Waterbody outflow point x-coordinate (BNG) [m]*
+    - OutflowY: *Waterbody outflow point y-coordinate (BNG) [m]*
     - RBD_NAME: *River basin district name*
+    - Type_IWB: *Waterbody type*
+    - UpsArea_m2: *Area upstream of waterbody outlet [m^2]*
+    - XCent: *Waterbody centroid x-coordinate (BNG) [m]*
+    - Ycent: *Waterbody centroid y-coordinate (BNG) [m]*
 
 QNaturalFlows_NBB
     - EA_WB_ID: *Waterbody ID (index column)*
     - QN{P}sub: *Natural flow (sub) at percentile {P} [Ml/d]*
     - QN{P}ups: *Natural flow (ups) at percentile {P} [Ml/d]*
 
+REFS_NBB
+    - EA_WB_ID: *Waterbody ID (index column)*
+    - REFSQ{P}: *Reference flow (typically EFI = environmental flow indicator) at flow
+      percentile {P} [Ml/d]*
+
+Seasonal_Lookup
+    - LOOKUP: *Identifier to look up percentile impact factor for SWABS according to
+      abstraction start and end months (index column)*
+    - SFAC{P}: *SWABS impact factor for percentile {P} [-]*
+
 SupResGW_NBB
     - UNID: *Unique ID (index column)*
-    - PURPOSE: *Impact purpose*
     - EA_WB_ID: *Impacted waterbody ID*
-    - SUP{S}Q{P}: *Impact at flow percentile {P} under scenario {S} [Ml/d]*
     - NAME: *Impact name*
     - OPERATOR: *Operator name*
+    - PURPOSE: *Impact purpose*
+    - SUP{S}Q{P}: *Impact at flow percentile {P} under scenario {S} [Ml/d]*
     - TYPE_SUPRESGW: *Complex impact type*
 
 SWABS_NBB
     - UNIQUEID: *Unique ID (index column)*
     - EA_WB_ID: *Impacted waterbody ID*
-    - SWQ{P}{S}WR: *Total abstraction impact at flow percentile {P} under scenario {S}
-      (accounting for local consumptiveness) [Ml/d]*
+    - ENDMON: *End month for abstraction profile*
     - HOFMLD: *Hands-off flow (in HOFWBID) at which abstraction impact ceases [Ml/d]*
     - HOFWBID: *ID of waterbody that defines hands-off flow for this abstraction*
-    - LICNUMBER: *Licence number*
-    - SITENAME: *Site name*
-    - PURPCODE: *Abstraction purpose code*
     - LICHOLDER: *Licence holder name*
-    - FLPTPANQM3: *Point-purpose annual quantity under FL scenario [m^3]*
-    - RAPTPANQM3: *Point-purpose annual quantity under RA scenario [m^3]*
-    - SWPROPCONS: *Abstraction consumptiveness [-]*
+    - LICNUMBER: *Licence number*
+    - LICN_EXPD: *Licence expiry date or flag (D for deregulated)*
+    - PURPCODE: *Abstraction purpose code*
     - RESRVRFLAG: *Flag indicating whether abstraction associated with reservoir*
+    - SITENAME: *Site name*
+    - STARTMON: *Start month for abstraction profile*
+    - SWLTA{S}NR: *Long-term average abstraction (no local returns) under scenario {S}
+      [Ml/d]*
+    - SWPROPCONS: *Abstraction consumptiveness [-]*
+    - SWQ{P}{S}WR: *Total abstraction impact at flow percentile {P} under scenario {S}
+      (accounting for local consumptiveness) [Ml/d]*
+    - SW_LAKE{i}: *Flag indicating whether abstraction associated with lake {i} (refers to
+      ledger numbering, with {i} = {1, 2, 3, 4, 5})*
     - SW_LDMU_NO: *Flag indicating whether abstraction associated with level-dependent
       management unit*
-    - SW_LAKE1: *Flag indicating whether abstraction associated with lake 1 (refers to
-      ledger numbering)*
-    - SW_LAKE2: *As SW_LAKE1 but for lake 2*
-    - SW_LAKE3: *As SW_LAKE1 but for lake 3*
-    - SW_LAKE4: *As SW_LAKE1 but for lake 4*
-    - SW_LAKE5: *As SW_LAKE1 but for lake 5*
-    - LICN_EXPD: Licence expiry date or flag (D for deregulated)
+
+Optional Table Fields
+---------------------
+
+Fix_Flags
+    - EA_WB_ID: *Waterbody ID (index column)*
+    - Fix_Flag: *Flag indicating level of "fix" to aim for in optimisation (3 =
+      compliant, 0 = no deterioration, -1 = no fix required)*
+
+.. note::
+
+    The Fix_Flags table is intended to align with the "fix" target options and flag
+    conventions used in the Environmental Destination modelling for the second
+    National Framework for Water Resources. This table is not essential for the
+    Optimiser, but if available it will be used to guide how flow targets are set.
 
 Derived Table Fields
 --------------------
 
-EFI
-    - EA_WB_ID: *Waterbody ID (index column)*
-    - EFIQ{P}: *Environmental flow indicator at flow percentile {P} [Ml/d]*
-
 Master
+    - EA_WB_ID: *Waterbody ID (index column)*
     - COMP{S}Q{P}: *Compliance band (0 = compliant, 1/2/3 = band 1/2/3, -999 = unassessed
       due to type)*
     - DISCH{S}{agg}: *Discharge impacts [Ml/d]*
-    - EFIQ{P}: *Environmental flow indicator [Ml/d]*
-    - GW{S}Q{P}{agg}: *Groundwater abstraction impacts [Ml/d]*
-    - QN{P}{agg}: *Natural flow[Ml/d]*
+    - GW{S}Q{P}{agg}: *Groundwater abstraction impacts (accounting for local
+      consumptiveness) [Ml/d]*
+    - QN{P}{agg}: *Natural flow [Ml/d]*
     - QT{S}Q{P}: *Flow target (which may differ from EFI) [Ml/d]*
+    - REFSQ{P}: *Reference flow (typically EFI) [Ml/d]*
     - SCEN{S}Q{P}{agg}: *Scenario flow (i.e. impacted/denaturalised) [Ml/d]*
-    - SD{S}Q{P}: *Surplus/deficit relative to EFI [Ml/d]*
+    - SD{S}Q{P}: *Surplus/deficit relative to reference flow [Ml/d]*
     - SDT{S}Q{P}: *Surplus/deficit relative to target flow (i.e. QT{S}Q{P}) [Ml/d]*
     - SUP{S}Q{P}{agg}: *Complex impacts [Ml/d]*
-    - SW{S}Q{P}{agg}: *Surface water abstraction impacts [Ml/d]*
+    - SW{S}Q{P}{agg}: *Surface water abstraction impacts (accounting for local
+      consumptiveness) [Ml/d]*
 
 .. note::
 
