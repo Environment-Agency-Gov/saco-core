@@ -465,8 +465,9 @@ class Dataset:
         return upstream_waterbodies
 
     def set_flow_targets(
-            self, overall_target: str = 'compliant', custom_targets: Dict = None,
-            overwrite_existing: bool = False, df: pd.DataFrame = None,
+            self, overall_target: str = 'compliant', use_fix_flags_table: bool = True,
+            custom_targets: Dict = None, overwrite_existing: bool = False,
+            df: pd.DataFrame = None,
     ):
         """
         Set flow target columns in Master table (in *Dataset.mt.data* attribute).
@@ -475,6 +476,8 @@ class Dataset:
             overall_target: Overall flow target to use for all waterbodies (which can
                 be overridden by custom_targets and/or df arguments. See notes below for
                 valid arguments.
+            use_fix_flags_table: Whether to use Fix_Flags table if available in the
+                Dataset.
             custom_targets: For overriding overall_target for specific waterbodies. See
                 discussion/example below for a guide to formulating this dictionary.
             overwrite_existing: Whether to overwrite any flow target columns that
@@ -491,7 +494,8 @@ class Dataset:
 
             Valid arguments for overall_target are: 'compliant', 'band-1', 'band-2',
             'band-3', 'none' and 'no-det'. The first four options refer to compliance
-            bands (relative to the EFI). In each case, the target is the minimum flow
+            bands (relative to the EFI unless a waterbody has a different target, which
+            will be indicated by its ASB). In each case, the target is the minimum flow
             needed to achieve the band (i.e. the lower bound/edge of the band). 'none'
             and 'band-3' are aliases (i.e. no flow target / trivial target of zero).
 
@@ -501,6 +505,14 @@ class Dataset:
             appropriate band. Note that this is not the same as no change between the
             RA and FL scenario flows (which could be implemented by passing an
             appropriate dataframe via the df argument).
+
+            If the ``use_fix_flags_table`` argument is set to True, the Fix_Flags table
+            will be used to define initial targets (if present in the Dataset). The
+            Fix_Flags table indicates whether the target for each waterbody is
+            compliance (3), no deterioration (0) or none/do-not-fix (-1). The table is
+            intended to align with targets used in the National Framework 2
+            Environmental Destination work programme. Note that the ``custom_targets``
+            and ``df`` arguments will override the Fix_Flags table if provided.
 
             The custom_targets argument can be used to override the overall_target for
             specific waterbodies. It should be provided as a dictionary of dictionaries,
@@ -521,7 +533,9 @@ class Dataset:
         if overall_target not in valid_targets:
             raise ValueError(f'Overall flow target not recognised: {overall_target}')
 
-        df0 = self._calculate_flow_targets(overall_target, custom_targets)
+        df0 = self._calculate_flow_targets(
+            overall_target, use_fix_flags_table, custom_targets,
+        )
 
         qt_cols = self.mt.get_value_columns(self.constants.qt_abb)
         if not overwrite_existing:
@@ -682,7 +696,8 @@ class Dataset:
             self.sup.data[self.sup.optimise_flag_column] = 0
 
     def _calculate_flow_targets(
-            self, overall_target: str, custom_targets: Dict = None,
+            self, overall_target: str, use_fix_flags_table: bool = True,
+            custom_targets: Dict = None,
     ) -> pd.DataFrame:
         """See docstring for set_flow_targets, for which this method is a helper."""
         col_mapper = {
@@ -692,21 +707,21 @@ class Dataset:
 
         df = self.mt.data.copy()
         for scenario, percentile in itertools.product(self.scenarios, self.percentiles):
-            efi_col = self.mt.get_efi_column(percentile)
+            refs_col = self.mt.get_refs_column(percentile)
             qt_col = self.mt.get_qt_column(scenario, percentile)
             qnat_col = self.mt.get_qnat_column(percentile, self.constants.ups_abb)
             ra_comp_col = self.mt.get_comp_column(self.constants.ra_abb, percentile)
 
-            df['__COMPLIANT'] = df[efi_col]
+            df['__COMPLIANT'] = df[refs_col]
             f1 = self.constants.compliance_bin_edges[2]
-            df['__BAND1'] = df[efi_col] + f1 * df[qnat_col]
+            df['__BAND1'] = df[refs_col] + f1 * df[qnat_col]
             f2 = self.constants.compliance_bin_edges[1]
-            df['__BAND2'] = df[efi_col] + f2 * df[qnat_col]
+            df['__BAND2'] = df[refs_col] + f2 * df[qnat_col]
             df['__BAND3'] = 0.0
             df['__NONE'] = 0.0
 
             if ra_comp_col in df.columns:
-                df['__NO_DET'] = df[efi_col]
+                df['__NO_DET'] = df[refs_col]
                 df['__NO_DET'] = np.where(
                     df[ra_comp_col] == 1, df['__BAND1'], df['__NO_DET']
                 )
@@ -722,7 +737,29 @@ class Dataset:
                     'Calculator to obtain suitable Dataset.'
                 )
             else:
-                df[qt_col] = df[col_mapper[overall_target]]
+                # TODO: Consider warning if Fix_Flags table not present?
+                if use_fix_flags_table and (self.wbfx.data is not None):
+                    df[qt_col] = df['__COMPLIANT']
+                    df[qt_col] = np.where(
+                        df.index.isin(
+                            self.wbfx.data.loc[
+                                self.wbfx.data[self.wbfx.fix_flag_column] == self.wbfx.targets['no-det']
+                            ].index.tolist()
+                        ),
+                        df['__NO_DET'],
+                        df[qt_col]
+                    )
+                    df[qt_col] = np.where(
+                        df.index.isin(
+                            self.wbfx.data.loc[
+                                self.wbfx.data[self.wbfx.fix_flag_column] == self.wbfx.targets['none']
+                            ].index.tolist()
+                        ),
+                        df['__NONE'],
+                        df[qt_col]
+                    )
+                else:
+                    df[qt_col] = df[col_mapper[overall_target]]
 
             if custom_targets is not None:
                 k = (scenario, percentile)
@@ -820,7 +857,7 @@ class Dataset:
 
     @property
     def derived_table_names(self) -> List[str]:
-        return ['EFI', 'FlowTargets', 'Master']
+        return ['REFS_NBB', 'Master', 'Fix_Flags']
 
     @property
     def input_tables(self) -> List[Table]:
