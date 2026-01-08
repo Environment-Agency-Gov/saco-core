@@ -1226,9 +1226,9 @@ class ASBPercentages(Table):
         return [1, 2, 3, 11, 12, 13]
 
 
-class EFI(DataTable):
+class REFS_NBB(DataTable):
     """
-    Table for environmental flow indicator (EFI) per waterbody.
+    Table for reference flow (typically EFI) per waterbody.
 
     """
     def set_schema(
@@ -1240,7 +1240,7 @@ class EFI(DataTable):
             auxiliary_mode=auxiliary_mode,
         )
 
-    def get_value_column(self, percentile) -> str:
+    def get_value_column(self, percentile: int) -> str:
         """
         Return name of value column.
 
@@ -1255,11 +1255,11 @@ class EFI(DataTable):
 
     @property
     def name(self) -> str:
-        return 'EFI'
+        return 'REFS_NBB'
 
     @property
     def short_name(self) -> str:
-        return 'efi'
+        return 'refs'
 
     @property
     def index_name(self) -> str:
@@ -1272,6 +1272,7 @@ class EFI(DataTable):
     @property
     def variable_abb(self) -> str:
         return self.constants.efi_abb
+        return self.constants.refs_abb
 
 
 class Master(Table):
@@ -1440,9 +1441,9 @@ class Master(Table):
             self.constants.sup_abb, scenario, percentile, value_type
         )
 
-    def get_efi_column(self, percentile: int) -> str:
+    def get_refs_column(self, percentile: int) -> str:
         """
-        Return name of environmental flow indicator (EFI) value column.
+        Return name of reference flow (typically EFI) value column.
 
         Args:
             percentile: Flow percentile (natural).
@@ -1452,7 +1453,7 @@ class Master(Table):
 
         """
         return self.get_value_column(
-            self.constants.efi_abb, percentile=percentile
+            self.constants.refs_abb, percentile=percentile
         )
 
     def get_scen_column(self, scenario: str, percentile: int, value_type: str) -> str:
@@ -1516,9 +1517,7 @@ class Master(Table):
              Name of value column.
 
         """
-        return self.get_value_column(
-            self.constants.qt_abb, scenario, percentile
-        )  # append ups?
+        return self.get_value_column(self.constants.qt_abb, scenario, percentile)
 
     def get_sdt_column(self, scenario: str, percentile: int) -> str:
         """
@@ -1552,7 +1551,7 @@ class Master(Table):
     def variable_abbs(self) -> List[str]:
         return [
             self.constants.qnat_abb, self.constants.gwabs_abb, self.constants.swabs_abb,
-            self.constants.dis_abb, self.constants.sup_abb, self.constants.efi_abb,
+            self.constants.dis_abb, self.constants.sup_abb, self.constants.refs_abb,
             self.constants.scen_abb, self.constants.sd_abb, self.constants.comp_abb,
             self.constants.qt_abb, self.constants.sdt_abb,
         ]
@@ -1594,7 +1593,7 @@ class Master(Table):
             self.constants.swabs_abb: ['scenario', 'percentile', 'value_type'],
             self.constants.dis_abb: ['scenario', 'value_type'],
             self.constants.sup_abb: ['scenario', 'percentile', 'value_type'],
-            self.constants.efi_abb: ['percentile'],
+            self.constants.refs_abb: ['percentile'],
             self.constants.scen_abb: ['scenario', 'percentile', 'value_type'],
             self.constants.sd_abb: ['scenario', 'percentile'],
             self.constants.comp_abb: ['scenario', 'percentile'],
