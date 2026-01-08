@@ -241,7 +241,7 @@ class Dataset:
     def write_tables(
             self, output_folder: Union[Path, str], overwrite: bool = False,
             table_names: List[str] = None, output_format: str = 'parquet',
-            zip_name: str = None,
+            zip_name: str = None, decimal_places: float = None,
     ):
         """
         Write data tables to parquet or (zipped) csv files.
@@ -254,6 +254,8 @@ class Dataset:
             output_format: Either 'parquet' or 'zip-csv' (currently).
             zip_name: Optional name of zip archive if output_format is 'zip-csv'. If
                 not provided zip archive name will default to 'dataset.zip'.
+            decimal_places: Number of decimal places to use in rounding. If None
+                (default) then no rounding is applied.
 
         """
         if table_names is None:
@@ -267,8 +269,15 @@ class Dataset:
             for table in tables:
                 output_path = os.path.join(output_folder, table.file_name)
                 check_if_output_path_exists(output_path, overwrite)
+
                 cols = sorted(table.data.columns)
-                table.data[cols].to_parquet(output_path, index=True)
+
+                if decimal_places is None:
+                    df = table.data
+                else:
+                    df = table.data.round(decimal_places)
+
+                df[cols].to_parquet(output_path, index=True)
 
         elif output_format == 'zip-csv':
             if zip_name is None:
@@ -285,6 +294,11 @@ class Dataset:
                 for table in tables:
                     cols = sorted(table.data.columns)
 
+                    if decimal_places is None:
+                        df = table.data
+                    else:
+                        df = table.data.round(decimal_places)
+
                     # Use ZipInfo object to get sensible file creation timestamp
                     now = datetime.datetime.now()
                     date_time = (
@@ -293,7 +307,7 @@ class Dataset:
                     zi = zipfile.ZipInfo(f'{table.name}.csv', date_time)
                     zi.compress_type = zipfile.ZIP_DEFLATED
 
-                    output_data = table.data[cols].to_csv().encode('utf-8')
+                    output_data = df[cols].to_csv().encode('utf-8')
                     zf.writestr(zi, output_data)
 
         else:
