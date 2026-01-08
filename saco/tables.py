@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Dict, Union
 
+import numpy as np
 import pandas as pd
 import pandera.pandas as pa
 
@@ -393,6 +394,15 @@ class GWABs_NBB(DataTable):
         auxiliary_columns[self.purpose_column] = {'type': str, 'nullable': False}
         auxiliary_columns[self.licence_expiry_column] = {'type': str, 'nullable': True}
 
+        auxiliary_columns[self.consumptiveness_column] = {
+            'type': float, 'nullable': False,
+        }
+        auxiliary_columns[self.impfac_column] = {'type': float, 'nullable': False}
+
+        for scenario in self.scenarios:
+            lta_col = self.get_lta_column(scenario)
+            auxiliary_columns[lta_col] = {'type': float, 'nullable': False}
+
         # Metadata columns that are not used in the code (and do not have a property to
         # indicate the column name)
         auxiliary_columns['LICNUMBER'] = {
@@ -404,18 +414,6 @@ class GWABs_NBB(DataTable):
         auxiliary_columns['LICHOLDER'] = {
             'type': str, 'nullable': True, 'required': False,
         }
-        auxiliary_columns['FLPTPANQM3'] = {
-            'type': float, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['RAPTPANQM3'] = {
-            'type': float, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['GWPROPCONS'] = {
-            'type': float, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['IMPFAC'] = {
-            'type': float, 'nullable': True, 'required': False,
-        }
 
         schema = self._schema_helper(
             auxiliary_columns, check_positive, unique_index=unique_index,
@@ -425,7 +423,10 @@ class GWABs_NBB(DataTable):
 
     def get_value_column(self, scenario: str, percentile: int) -> str:
         """
-        Return name of value column.
+        Return name of value column (impact at scenario/percentile combination).
+
+        Accounts for local consumptiveness ("WR" = "water returned" in WRGIS
+        terminology).
 
         Args:
             scenario: Name/abbreviation of artificial influences scenario.
@@ -436,6 +437,67 @@ class GWABs_NBB(DataTable):
 
         """
         return f'{self.variable_abb}Q{percentile}{scenario}WR'
+
+    def get_lta_column(self, scenario: str) -> str:
+        """
+        Return name of long-term average (excluding local consumptiveness) column.
+
+        "NR" suffix indicates "no water returned" in WRGIS terminology.
+
+        Args:
+            scenario: Name/abbreviation of artificial influences scenario.
+
+        Returns:
+             Name of value column.
+
+        """
+        return f'{self.variable_abb}LTA{scenario}NR'
+
+    def infer_mean_abstraction(
+            self, scenario: str, percentile: int, exclude_ids: List[str] = None,
+    ):
+        """
+        Infer mean abstraction from impacts under a given scenario and percentile.
+
+        Updates LTA column in *data* (dataframe) attribute. See detailed notes in
+        ``dataset.infer_mean_abstraction`` method.
+
+        Args:
+            scenario: Abbreviation of artificial influences scenario used as basis for
+                inferring long-term average abstraction.
+            percentile: Flow percentile (natural) used as basis for inferring long-term
+                average abstraction.
+            exclude_ids: Abstractions whose long-term average should not be inferred.
+                List should contain entries from UNIQUEID in GWABs_NBB.
+
+        """
+        if exclude_ids is None:
+            exclude_ids = []
+
+        gwabs_impact_col = self.get_value_column(scenario, percentile)
+        lta_col = self.get_lta_column(scenario)
+        tmp_col = lta_col + '__TEMP'
+
+        self.data[tmp_col] = np.where(
+            self.data[self.consumptiveness_column] == 0.0,
+            0.0,
+            self.data[gwabs_impact_col] /
+            (
+                self.data[self.consumptiveness_column]
+                * (1 + (1 - self.data[self.impfac_column]) * (0.5 - (percentile / 100)) / 0.5)
+            )
+        )
+
+        if lta_col not in self.data.columns:
+            self.data[lta_col] = np.nan
+
+        self.data[lta_col] = np.where(
+            self.data.index.isin(exclude_ids),
+            self.data[lta_col],
+            self.data[tmp_col]
+        )
+
+        self.data = self.data.drop(columns=tmp_col)
 
     @property
     def name(self) -> str:
@@ -490,6 +552,16 @@ class GWABs_NBB(DataTable):
         return 'LICN_EXPD'
 
     @property
+    def consumptiveness_column(self) -> str:
+        """Name of column with (fractional) local consumptiveness."""
+        return 'GWPROPCONS'
+
+    @property
+    def impfac_column(self) -> str:
+        """Name of column with impact factor for disaggregation across FDC."""
+        return 'IMPFAC'
+
+    @property
     def infill_mapping(self) -> Dict:
         """
         Values to use for infilling missing entries in particular columns.
@@ -499,6 +571,54 @@ class GWABs_NBB(DataTable):
 
         """
         return {0: self.impact_proportion_columns, '': self.impacted_waterbody_columns}
+
+
+class Seasonal_Lookup(DataTable):
+    """
+    Table for seasonal lookup factors to convert SWABS LTA to percentile impacts.
+
+    """
+    def set_schema(
+            self, unique_index: bool = True, check_positive: bool = True,
+            auxiliary_mode: bool = False,
+    ):
+        self._schema = self._schema_helper(
+            None, check_positive, unique_index=unique_index,
+            auxiliary_mode=auxiliary_mode,
+        )
+
+    def get_value_column(self, percentile: int) -> str:
+        """
+        Return name of value column.
+
+        Args:
+            percentile: Flow percentile (natural).
+
+        Returns:
+             Name of value column.
+
+        """
+        return f'SFAC{percentile}'
+
+    @property
+    def name(self) -> str:
+        return 'Seasonal_Lookup'
+
+    @property
+    def short_name(self) -> str:
+        return 'sfac'
+
+    @property
+    def index_name(self) -> str:
+        return 'LOOKUP'
+
+    @property
+    def factor_names(self) -> List[str]:
+        return ['percentile']
+
+    @property
+    def variable_abb(self) -> str:
+        return self.constants.sfac_abb
 
 
 class SWABS_NBB(DataTable):
@@ -523,6 +643,16 @@ class SWABS_NBB(DataTable):
             auxiliary_columns[lake_col] = {'type': int, 'nullable': False}
         auxiliary_columns[self.licence_expiry_column] = {'type': str, 'nullable': True}
 
+        auxiliary_columns[self.consumptiveness_column] = {
+            'type': float, 'nullable': False,
+        }
+        auxiliary_columns[self.start_month_column] = {'type': int, 'nullable': False}
+        auxiliary_columns[self.end_month_column] = {'type': int, 'nullable': False}
+
+        for scenario in self.scenarios:
+            lta_col = self.get_lta_column(scenario)
+            auxiliary_columns[lta_col] = {'type': float, 'nullable': False}
+
         # Metadata columns that are not used in the code (and do not have a property to
         # indicate the column name)
         auxiliary_columns['LICNUMBER'] = {
@@ -534,15 +664,6 @@ class SWABS_NBB(DataTable):
         auxiliary_columns['LICHOLDER'] = {
             'type': str, 'nullable': True, 'required': False,
         }
-        auxiliary_columns['FLPTPANQM3'] = {
-            'type': float, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['RAPTPANQM3'] = {
-            'type': float, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['SWPROPCONS'] = {
-            'type': float, 'nullable': True, 'required': False,
-        }
 
         schema = self._schema_helper(
             auxiliary_columns, check_positive, unique_index=unique_index,
@@ -552,7 +673,10 @@ class SWABS_NBB(DataTable):
 
     def get_value_column(self, scenario: str, percentile: int) -> str:
         """
-        Return name of value column.
+        Return name of value column (impact at scenario/percentile combination).
+
+        Accounts for local consumptiveness ("WR" = "water returned" in WRGIS
+        terminology).
 
         Args:
             scenario: Name/abbreviation of artificial influences scenario.
@@ -563,6 +687,92 @@ class SWABS_NBB(DataTable):
 
         """
         return f'{self.variable_abb}Q{percentile}{scenario}WR'
+
+    def get_lta_column(self, scenario: str) -> str:
+        """
+        Return name of long-term average (excluding local consumptiveness) column.
+
+        "NR" suffix indicates "no water returned" in WRGIS terminology.
+
+        Args:
+            scenario: Name/abbreviation of artificial influences scenario.
+
+        Returns:
+             Name of value column.
+
+        """
+        return f'{self.variable_abb}LTA{scenario}NR'
+
+    def infer_mean_abstraction(
+            self, scenario: str, percentile: int, sfac: Seasonal_Lookup,
+            exclude_swabs_with_hofs: bool = True, exclude_ids: List[str] = None,
+    ):
+        """
+        Infer mean abstraction from impacts under a given scenario and percentile.
+
+        Updates LTA column in *data* (dataframe) attribute. See detailed notes in
+        ``dataset.infer_mean_abstraction`` method.
+
+        Args:
+            scenario: Abbreviation of artificial influences scenario used as basis for
+                inferring long-term average abstraction.
+            percentile: Flow percentile (natural) used as basis for inferring long-term
+                average abstraction.
+            sfac: Instance of *Seasonal_Lookup* table to facilitate inference of
+                long-term average from a given percentile.
+            exclude_swabs_with_hofs: Whether to exclude SWABS with HOFs from long-term
+                average calculations.
+            exclude_ids: Abstractions whose long-term average should not be inferred.
+                List should contain entries from UNIQUEID in SWABS_NBB.
+
+        """
+        if exclude_ids is None:
+            exclude_ids = []
+
+        swabs_impact_col = self.get_value_column(scenario, percentile)
+        lta_col = self.get_lta_column(scenario)
+        tmp_col = lta_col + '__TEMP'
+
+        sfac_lookup_col = sfac.data.index.name
+        sfac_col = sfac.get_value_column(percentile)
+
+        self.data[sfac_lookup_col] = (
+            self.data[self.start_month_column].astype(str)
+            + '&' + self.data[self.end_month_column].astype(str)
+        )
+        self.data = pd.merge(
+            self.data, sfac.data[[sfac_col]], how='left', left_on=sfac_lookup_col,
+            right_index=True,
+        )
+
+        self.data[tmp_col] = np.where(
+            (self.data[swabs_impact_col] > 0.0)
+            & (self.data[self.consumptiveness_column] > 0.0)
+            & (self.data[sfac_col] > 0.0),
+
+            self.data[swabs_impact_col]
+            / self.data[sfac_col]
+            / self.data[self.consumptiveness_column],
+
+            0.0
+        )
+
+        if exclude_swabs_with_hofs:
+            hof_ids = self.data.loc[
+                self.data[self.hof_value_column] > 0.0
+            ].index.tolist()
+            _exclude_ids = list(set(exclude_ids + hof_ids))
+        else:
+            _exclude_ids = exclude_ids
+
+        if lta_col not in self.data.columns:
+            self.data[lta_col] = np.nan
+        self.data[lta_col] = np.where(
+            self.data.index.isin(_exclude_ids),
+            self.data[lta_col],
+            self.data[tmp_col]
+        )
+        self.data = self.data.drop(columns=[tmp_col, sfac_lookup_col, sfac_col])
 
     @property
     def name(self) -> str:
@@ -623,6 +833,21 @@ class SWABS_NBB(DataTable):
     def licence_expiry_column(self) -> str:
         """Name of column with date/flag indicating licence expiry date."""
         return 'LICN_EXPD'
+
+    @property
+    def consumptiveness_column(self) -> str:
+        """Name of column with (fractional) local consumptiveness."""
+        return 'SWPROPCONS'
+
+    @property
+    def start_month_column(self) -> str:
+        """Name of column indicating start month for abstraction."""
+        return 'STARTMON'
+
+    @property
+    def end_month_column(self) -> str:
+        """Name of column indicating end month for abstraction."""
+        return 'ENDMON'
 
     @property
     def infill_mapping(self) -> Dict:
