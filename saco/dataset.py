@@ -1055,8 +1055,11 @@ def subset_dataset_on_wbs(ds: Dataset, waterbodies: List[str]) -> Dataset:
     ds1 = Dataset()
 
     for table in ds.tables:
-        if table.name == 'ASBPercentages':
+        if table.name in ['ASBPercentages', 'Seasonal_Lookup']:
             df = table.data
+
+        elif (table.name == 'Fix_Flags') and (table.data is None):
+            df = None
 
         elif table.name in ds.waterbody_id_table_names:
             df = df_wbs.merge(
@@ -1095,7 +1098,10 @@ def subset_dataset_on_wbs(ds: Dataset, waterbodies: List[str]) -> Dataset:
                 )
                 df.index.name = table.index_name
 
-        ds1.get_table(table.name).set_data(df.copy())
+        if df is None:
+            pass
+        else:
+            ds1.get_table(table.name).set_data(df.copy())
 
     ds1.set_graph()
     ds1.set_routing_matrix()
