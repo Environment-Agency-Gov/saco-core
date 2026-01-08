@@ -132,6 +132,12 @@ class Optimiser:
         be changed to 'relax' to indicate that the Optimiser should try to hit the
         maximum feasible flow for any impossible targets.
 
+        Long-term average abstraction is recalculated after optimisation under the
+        assumption that the relative impact profile across the FDC remains constant.
+        However, SWABS with hands-off flow (HOF) conditions are omitted from the
+        recalculation at present to avoid introducing a conservative bias into the
+        estimates. See :doc:`reference-dataset` for more details.
+
     Examples:
         >>> from saco import Dataset, Optimiser
         >>>
@@ -333,8 +339,14 @@ class Optimiser:
         self.output_dataset = self._initialise_output_dataset(ds)
 
         # Augment dataset with tables of SWABS and GWABS changes relative to reference
-        # dataset
+        # dataset. The derive_changes method identifies changes for specific
+        # scenario/percentile combinations - the _infer_mean_abstraction method finds
+        # changes in long-term averages too
         self.derive_changes()
+
+        # Infer revised mean (long-term average) abstraction and associated changes
+        for scenario in self.scenarios:
+            self._infer_mean_abstraction(scenario, self.lta_base_percentile)
 
         ds = self.output_dataset
 
@@ -380,6 +392,10 @@ class Optimiser:
     def derive_changes(self, table_names: List[str] = None):
         """
         Derive changes in optimised abstraction impacts relative to reference dataset.
+
+        This method does not derive (meaningful) changes in long-term averages. These
+        changes are derived in a subsequent call to _infer_mean_abstraction. See run
+        method.
 
         Args:
             table_names: Tables for which changes should be derived.
@@ -471,6 +487,91 @@ class Optimiser:
                         f'({limit_col}) in SupResGW table in input Dataset - set '
                         f'manually.'
                     )
+
+    def _infer_mean_abstraction(
+            self, scenario: str = 'FL', percentile: int = 95,
+            exclude_swabs_with_hofs: bool = True,
+    ):
+        """
+        Infer mean abstraction from impacts under a given scenario and percentile.
+
+        See ``dataset.infer_mean_abstraction`` for detailed notes. Note also that this
+        method updates the long-term averages columns in the relevant changes tables.
+
+        Args:
+            scenario: Abbreviation of artificial influences scenario used as basis for
+                inferring long-term average abstraction.
+            percentile: Flow percentile (natural) used as basis for inferring long-term
+                average abstraction.
+            exclude_swabs_with_hofs: Whether to exclude SWABS with HOFs from long-term
+                average calculations.
+
+        """
+        # Find swabs and gwabs that have not changed - these should be excluded from LTA
+        # recalculation
+        df = self.output_dataset.gwabs_chg.data
+        value_col = self.output_dataset.gwabs_chg.get_value_column(scenario, percentile)
+        if df.shape[0] > 0:
+            exclude_gwabs = df.loc[df[value_col] > -1e-6].index.tolist()
+        else:
+            exclude_gwabs = []
+
+        df = self.output_dataset.swabs_chg.data
+        value_col = self.output_dataset.swabs_chg.get_value_column(scenario, percentile)
+        if df.shape[0] > 0:
+            exclude_swabs = df.loc[df[value_col] > -1e-6].index.tolist()
+        else:
+            exclude_swabs = []
+
+        self.output_dataset.infer_mean_abstraction(
+            scenario, percentile, exclude_swabs_with_hofs, exclude_gwabs, exclude_swabs,
+        )
+
+        # Update the changes tables to give changes in LTAs - requires explicit
+        # calculation of changes relative to reference, which are then inserted into the
+        # change tables
+        if self.reference_dataset is None:
+            ds = self.input_dataset
+        else:
+            ds = self.reference_dataset
+
+        if self.output_dataset.gwabs_chg.data.shape[0] > 0:
+            lta_col = ds.gwabs.get_lta_column(scenario)
+            df = self._update_lta_change(
+                ds.gwabs.data, self.output_dataset.gwabs.data,
+                self.output_dataset.gwabs_chg.data, lta_col, exclude_gwabs,
+            )
+            self.output_dataset.gwabs_chg.set_data(df)
+
+        if self.output_dataset.swabs_chg.data.shape[0] > 0:
+            lta_col = ds.swabs.get_lta_column(scenario)
+            df = self._update_lta_change(
+                ds.swabs.data, self.output_dataset.swabs.data,
+                self.output_dataset.swabs_chg.data, lta_col, exclude_swabs
+            )
+            self.output_dataset.swabs_chg.set_data(df)
+
+    @staticmethod
+    def _update_lta_change(
+            df_ref: pd.DataFrame, df_opt: pd.DataFrame, df_chg: pd.DataFrame,
+            lta_col: str, exclusions: List,
+    ):
+        """Helper method for _infer_mean_abstraction (identify change in LTA)."""
+        df = df_ref[[lta_col]].copy()
+        df = df.rename(columns={lta_col: f'{lta_col}__OLD'})
+
+        df = pd.merge(df, df_opt[[lta_col]], left_index=True, right_index=True)
+        df = df.rename(columns={lta_col: f'{lta_col}__NEW'})
+        df[f'{lta_col}__CHANGE'] = df[f'{lta_col}__NEW'] - df[f'{lta_col}__OLD']
+        df.loc[df.index.isin(exclusions), f'{lta_col}__CHANGE'] = 0.0
+
+        df_chg = pd.merge(
+            df_chg.drop(columns=lta_col), df[[f'{lta_col}__CHANGE']], left_index=True,
+            right_index=True,
+        )
+        df_chg = df_chg.rename(columns={f'{lta_col}__CHANGE': lta_col})
+
+        return df_chg
 
     @staticmethod
     def _modify_dataset(
