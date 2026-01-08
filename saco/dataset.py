@@ -17,10 +17,11 @@ import networkx as nx
 
 from .tables import (
     Table, DataTable, IntegratedWBs_NBB, QNaturalFlows_NBB, AbsSensBands_NBB,
-    SWABS_NBB, GWABs_NBB,Discharges_NBB, SupResGW_NBB, ASBPercentages, EFI, Master
+    SWABS_NBB, GWABs_NBB, Discharges_NBB, SupResGW_NBB, ASBPercentages, REFS_NBB,
+    Seasonal_Lookup, Fix_Flags, Master
 )
 from .config import Constants
-from .utils import check_if_output_path_exists, infill_cols
+from .utils import check_if_output_path_exists
 
 
 class Dataset:
@@ -85,11 +86,17 @@ class Dataset:
         #: tables.SupResGW_NBB: Instance of complex impacts table.
         self.sup = SupResGW_NBB()
 
-        #: tables.asb_percs: Instance of ASB percentage definitions table.
+        #: tables.ASBPercentages: Instance of ASB percentage definitions table.
         self.asb_percs = ASBPercentages()
 
-        #: tables.EFI: Instance of environmental flow indicator (EFI) table.
-        self.efi = EFI()
+        #: tables.REFS_NBB: Instance of reference flow (EFI+) table.
+        self.refs = REFS_NBB()
+
+        #: tables.Seasonal_Lookup: Instance of SWABS disaggregation factors table.
+        self.sfac = Seasonal_Lookup()
+
+        #: tables.Fix_Flags: Instance of (optional) waterbody fix flags table.
+        self.wbfx = Fix_Flags()
 
         #: tables.Master: Instance of waterbody level "master" table.
         self.mt = Master(self.scenarios, self.percentiles)
@@ -100,7 +107,7 @@ class Dataset:
 
     def load_tables(
             self, skip_tables: List[str] = None, set_index: bool = False,
-            validate: bool = False,
+            validate: bool = False, optional_tables: List[str] = None,
     ):
         """
         Load data tables from parquet files (sets *data* attributes of tables).
@@ -112,14 +119,25 @@ class Dataset:
                 for files written by data preparation routine).
             validate: Whether to validate data tables against their schemas (again not
                 typically required after data have been prepared).
+            optional_tables: Tables to be loaded if available in data_folder but skipped
+                if unavailable. The default (None) indicates that the Fix_Flags table
+                is the only optional table.
 
         """
         if skip_tables is None:
             skip_tables = []
+        if optional_tables is None:
+            optional_tables = ['Fix_Flags']
 
         for table in self.tables:
             if table.name not in skip_tables:
-                table.load_data(self.data_folder, set_index, validate)
+                try:
+                    table.load_data(self.data_folder, set_index, validate)
+                except FileNotFoundError:
+                    if table.name not in optional_tables:
+                        raise FileNotFoundError(
+                            f'File for table {table.name} not found in {self.data_folder}'
+                        )
 
     def load_graph(self):
         """Load directed graph defining waterbody network (sets *graph* attribute)."""
@@ -133,7 +151,7 @@ class Dataset:
 
     def load_data(
             self, skip_tables: List[str] = None, set_index: bool = False,
-            validate: bool = False,
+            validate: bool = False, optional_tables: List[str] = None,
     ):
         """
         Load data tables, directed graph (waterbody network) and routing matrix.
@@ -149,9 +167,12 @@ class Dataset:
                 for files written by data preparation routine).
             validate: Whether to validate data tables against their schemas (again not
                 typically required after data have been prepared).
+            optional_tables: Tables to be loaded if available in data_folder but skipped
+                if unavailable. The default (None) indicates that the Fix_Flags table
+                is the only optional table.
 
         """
-        self.load_tables(skip_tables, set_index, validate)
+        self.load_tables(skip_tables, set_index, validate, optional_tables)
         self.load_graph()
         self.load_routing_matrix()
 
