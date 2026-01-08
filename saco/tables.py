@@ -1271,7 +1271,6 @@ class REFS_NBB(DataTable):
 
     @property
     def variable_abb(self) -> str:
-        return self.constants.efi_abb
         return self.constants.refs_abb
 
 
