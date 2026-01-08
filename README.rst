@@ -14,18 +14,25 @@ Installation
 ------------
 
 After cloning the repository (or downloading/unzipping a specific release), create a
-new Python environment (e.g. a virtual environment or conda environment). Then in
-a terminal navigate to the root of the repository and install the package with::
+new Python environment (e.g. a virtual environment or conda environment). The version
+of Python should be greater than 3.13. Then in a terminal navigate to the root of the
+repository. To install the package, core dependencies and JupyterLab (for running the
+example notebook) at the same time (recommended for most users), use the command::
 
-    pip install -e .
+    pip install -e .[jupyter]
 
 Note that:
 
+    - The ``[jupyter]`` part may be dropped if JupyterLab is not required (i.e. for a
+      minimal installation use the command ``pip install -e .``).
     - The environment.yml file in the repository root can be optionally used to create
       a conda environment with the same dependency versions used in initial development
       and testing.
     - The ``-e`` flag is optional (for installing the package in editable/developer
       mode).
+    - Some users may wish to install via ``pip install -e .[jupyter,dev]`` to obtain
+      additional packages used for testing and building documentation (which may not be
+      relevant to all users).
 
 Documentation
 -------------
