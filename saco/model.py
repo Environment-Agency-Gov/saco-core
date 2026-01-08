@@ -187,17 +187,20 @@ class DataPreparer:
         scenario: Name/abbreviation of artificial influences scenario.
         percentile: Flow percentile (natural).
         waterbodies: Waterbodies in domain to be used.
+        infeasible_targets_method: Approach to infeasible targets - drop entirely or
+            relax to maximum feasible flow.
         constants: By default instance of config.Constants.
 
     """
     def __init__(
             self, ds: Dataset, scenario: str, percentile: int, waterbodies: List[str],
-            constants: Constants = None,
+            infeasible_targets_method: str = 'drop', constants: Constants = None,
     ):
         self._input_ds = ds
         self.scenario = scenario
         self.percentile = percentile
         self.waterbodies = waterbodies
+        self.infeasible_targets_method = infeasible_targets_method
 
         if constants is None:
             constants = Constants()
@@ -310,15 +313,27 @@ class DataPreparer:
             _n_wbs = len(_wbs)
             warnings.warn(
                 f'Some flow targets ({_n_wbs}) cannot be met (likely due to static '
-                f'impacts). These targets have been dropped - check outputs and/or set '
+                f'impacts). These targets have been relaxed - check outputs and/or set '
                 f'lower targets for {self.scenario} Q{self.percentile} if desired: '
                 f'{_wbs}'
             )
-            ds2.mt.data[qt_col] = np.where(
-                ds2.mt.data[f'{scen_col}__MAX'] < ds2.mt.data[qt_col],
-                0.0,
-                ds2.mt.data[qt_col]
-            )
+            if self.infeasible_targets_method == 'drop':
+                ds2.mt.data[qt_col] = np.where(
+                    ds2.mt.data[f'{scen_col}__MAX'] < ds2.mt.data[qt_col],
+                    0.0,
+                    ds2.mt.data[qt_col]
+                )
+            elif self.infeasible_targets_method == 'relax':
+                ds2.mt.data[qt_col] = np.where(
+                    ds2.mt.data[f'{scen_col}__MAX'] < ds2.mt.data[qt_col],
+                    ds2.mt.data[f'{scen_col}__MAX'],
+                    ds2.mt.data[qt_col]
+                )
+            else:
+                raise ValueError(
+                    f'Unknown self.infeasible_targets_method: '
+                    f'{self.infeasible_targets_method}'
+                )
 
         df = self.format_flows(ds2.mt)
         self.flows.set_data(df)
