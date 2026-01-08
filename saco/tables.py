@@ -1274,6 +1274,47 @@ class REFS_NBB(DataTable):
         return self.constants.refs_abb
 
 
+class Fix_Flags(Table):
+    """
+    Table for flags indicating level to which each waterbody should be "fixed".
+
+    """
+    def set_schema(self, unique_index: bool = True):
+        self._schema = pa.DataFrameSchema(
+            {self.fix_flag_column: pa.Column(int)},
+            index=pa.Index(str, unique=unique_index, name=self.index_name),
+            coerce=True,
+        )
+
+    @property
+    def name(self) -> str:
+        return 'Fix_Flags'
+
+    @property
+    def short_name(self) -> str:
+        return 'wbfx'
+
+    @property
+    def index_name(self) -> str:
+        return self.constants.waterbody_id_column
+
+    @property
+    def fix_flag_column(self) -> str:
+        """Name of column containing fix flags."""
+        return 'Fix_Flag'
+
+    @property
+    def targets(self) -> Dict:
+        """
+        Mapping of flow target to integer code.
+
+        Aligns with National Framework 2 targets and codes. Dictionary keys match
+        valid strings used by ``dataset.set_flow_targets``.
+
+        """
+        return {'compliant': 3, 'no-det': 0, 'none': -1}
+
+
 class Master(Table):
     """
     Master table to bring together all key columns at the waterbody level.
