@@ -1256,7 +1256,7 @@ def find_differences(
     in ds2 then the difference will come through as negative (i.e. a reduction in
     impact).
 
-    Function will only work for tables that are derived from tables.DataTable class
+    The function will only work for tables that are derived from tables.DataTable class
     (currently).
 
     Args:
@@ -1281,6 +1281,11 @@ def find_differences(
         df1 = ds1.get_table(table_name).data
         df2 = ds2.get_table(table_name).data
 
+        if (df1 is None) or (df2 is None):
+            raise ValueError(
+                f'Table {table_name} has no data in one or both input datasets.'
+            )
+
         if require_rows_match:
             if df1.shape[0] == df2.shape[0]:
                 if not np.all(df1.sort_index() == df2.sort_index()):
@@ -1295,15 +1300,21 @@ def find_differences(
             else:
                 raise ValueError(f'Different numbers of columns for table {table_name}.')
 
+        # Include long-term average columns for SWABS and GWABS if available
+        value_cols = [col for col in ds2.get_table(table_name).value_columns]
+        if table_name in ['SWABS_NBB', 'GWABs_NBB']:
+            for scenario in ds2.scenarios:
+                lta_col = ds2.get_table(table_name).get_lta_column(scenario)
+                if lta_col in ds2.get_table(table_name).data.columns:
+                    value_cols.append(lta_col)
+
         # Difference calculations
-        ref_cols = [
-            col for col in df1.columns if col in ds2.get_table(table_name).value_columns
-        ]
+        ref_cols = [col for col in df1.columns if col in value_cols]
         df3 = pd.merge(
             df2, df1[ref_cols], how='left', left_index=True, right_index=True,
             suffixes=(None, '__REF'),
         )
-        for value_col in ds2.get_table(table_name).value_columns:
+        for value_col in value_cols:
             df3[value_col] -= df3[f'{value_col}__REF']
 
             if significance_threshold is not None:
