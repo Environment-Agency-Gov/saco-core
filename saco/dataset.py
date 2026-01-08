@@ -1146,6 +1146,18 @@ def subset_dataset_on_columns(
                 aux_cols = [
                     col for col in table.data.columns if col not in old_value_cols
                 ]
+
+                if table.name in ['SWABS_NBB', 'GWABs_NBB']:
+                    _aux_cols = []
+                    for col in aux_cols:
+                        if f'{table.variable_abb}LTA' in col:
+                            scenario = col.replace(f'{table.variable_abb}LTA', '')[:-2]
+                            if scenario in scenarios:
+                                _aux_cols.append(col)
+                        else:
+                            _aux_cols.append(col)
+                    aux_cols = _aux_cols
+
                 cols = list(set(aux_cols + table.value_columns))
                 cols = [col for col in cols if col in table.data.columns]
                 df = table.data[cols].copy()
