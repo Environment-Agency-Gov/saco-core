@@ -211,6 +211,17 @@ class DataPreparer:
         self.ds = subset_dataset_on_columns(_ds, [scenario], [percentile])
         self.ds_opt = None  # will include only swabs and gwabs to be optimised
 
+        # Ensure max compensation flow increase column is present (it is not needed if
+        # no such impacts are being considered for optimisation, but some of the methods
+        # assume it is available)
+        upper_limit_col = self.ds.sup.get_upper_limit_column(
+            self.scenario, self.percentile
+        )
+        if upper_limit_col in self.ds.sup.data.columns:
+            pass
+        else:
+            self.ds.sup.data[upper_limit_col] = 0.0
+
         self.flows = Flows()
         self.swabs = SWABS()
         self.gwabs = GWABS()
