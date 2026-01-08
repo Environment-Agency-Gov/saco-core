@@ -356,13 +356,14 @@ class Optimiser:
             self, model: Model, auxiliary_info: AuxiliaryInfo, objective: str,
             special_constraints: List[str], arrays: Dict[str, np.ndarray],
             counts: Dict[str, int], scenario: str, percentile: int,
+            error_relaxation_factor: float = 0.999,
     ):
         """Solve for secondary objective with multiple tries in case of failure."""
         try:
             model.set_problem()
             model.run()
         except cp.error.SolverError:
-            auxiliary_info.domain_total_abstraction -= 1e-1
+            auxiliary_info.domain_total_abstraction *= error_relaxation_factor
             model = Model(
                 objective, special_constraints, auxiliary_info, arrays,
                 counts, solver=self.solver,
@@ -371,7 +372,7 @@ class Optimiser:
             model.run()
 
         if model.z.value is None:
-            auxiliary_info.domain_total_abstraction -= 1e-1
+            auxiliary_info.domain_total_abstraction *= error_relaxation_factor
             model = Model(
                 objective, special_constraints, auxiliary_info, arrays,
                 counts, solver=self.solver,
