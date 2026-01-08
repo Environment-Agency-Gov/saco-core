@@ -11,8 +11,9 @@ class Constants:
     ra_abb = 'RA'
     fl_abb = 'FL'
     fp_abb = 'FP'
-    valid_scenarios = [ra_abb, fl_abb, fp_abb]
 
+    # FP not included in default scenarios currently (requires update in WRGIS)
+    valid_scenarios = [ra_abb, fl_abb]
     valid_percentiles = [95, 70, 50, 30]
 
     sub_abb = 'sub'
@@ -26,13 +27,15 @@ class Constants:
     swabs_abb = 'SW'
     dis_abb = 'DISCH'
     sup_abb = 'SUP'
-    efi_abb = 'EFI'
+    refs_abb = 'REFS'
     scen_abb = 'SCEN'
     sd_abb = 'SD'
     comp_abb = 'COMP'
     qt_abb = 'QT'
     sdt_abb = 'SDT'
     asb_abb = 'ASB'
+    sfac_abb = 'SFAC'
+    wbfx_abb = 'WBFX'
 
     # Compliance bin edges
     # - gives lower and upper (factor) bounds for each classification (compliant and
