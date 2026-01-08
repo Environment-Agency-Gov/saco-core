@@ -103,6 +103,8 @@ class Optimiser:
             derive changes (i.e. for inference of required impact reductions after
             optimisation conducted). Default (None) is not to use this argument (and
             derive changes relative to input_dataset).
+        infeasible_targets_method: Approach to use to infeasible flow targets: either
+            'drop' entirely or 'relax' to maximum feasible flow.
         constants: Global constants defined by default in config.Constants.
 
     Notes:
@@ -125,6 +127,11 @@ class Optimiser:
         left alone. If a target cannot feasibly be met, the Optimiser drops the target
         and provides a warning to the user, so that they can reconsider the setup if need
         be.
+        left alone. If a target cannot feasibly be met, by default the Optimiser drops
+        the target and provides a warning to the user, so that they can reconsider the
+        setup if need be. However, the ``infeasible_targets_method`` argument can also
+        be changed to 'relax' to indicate that the Optimiser should try to hit the
+        maximum feasible flow for any impossible targets.
 
     Examples:
         >>> from saco import Dataset, Optimiser
@@ -149,6 +156,7 @@ class Optimiser:
             raise_external_hof_error: bool = False,
             primary_relaxation_factor: float = None,
             reference_dataset: Dataset = None,
+            infeasible_targets_method: str = 'drop',
             constants: Constants = None,
     ):
         if constants is None:
@@ -181,6 +189,24 @@ class Optimiser:
         self.raise_external_hof_error = raise_external_hof_error
         self.primary_relaxation_factor = primary_relaxation_factor
         self.reference_dataset = reference_dataset
+
+        if lta_base_percentile in self.percentiles:
+            self.lta_base_percentile = lta_base_percentile
+        else:
+            if len(self.percentiles) == 1:
+                self.lta_base_percentile = self.percentiles[0]
+            else:
+                raise ValueError(
+                    f'lta_base_percentile ({lta_base_percentile}) is not present in '
+                    f'either input percentiles argument or input dataset percentiles '
+                    f'attribute.'
+                )
+
+        if infeasible_targets_method not in ['drop', 'relax']:
+            raise ValueError(
+                f'Unknown infeasible_targets_method: {infeasible_targets_method}'
+            )
+        self.infeasible_targets_method = infeasible_targets_method
 
         self.formatted_data = {}
         self.arrays = {}
@@ -216,7 +242,7 @@ class Optimiser:
 
         # Intermediate data tables
         data_preparer = DataPreparer(
-            dataset, scenario, percentile,self.domain,
+            dataset, scenario, percentile, self.domain, self.infeasible_targets_method,
         )
         formatted_data = data_preparer.run()
 
