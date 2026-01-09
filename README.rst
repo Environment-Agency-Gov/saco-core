@@ -34,8 +34,8 @@ Note that:
       additional packages used for testing and building documentation (which may not be
       relevant to all users).
 
-To upgrade to a new release, one approach is to download/unzip the release, navigate to
-its root (containing ``pyproject.toml``, ...) and enter::
+To upgrade to a new release, one approach is to download/unzip the release, navigate in
+the terminal to its root directory (containing ``pyproject.toml``, ...) and enter::
 
     pip install . --upgrade
 
@@ -84,6 +84,6 @@ features, or functionality. Users should check for updated versions.
 The release of the SACO tool does not imply any obligation on the part of the
 Environment Agency to provide maintenance, support, or continued availability.
 
-© Environment Agency copyright 2025.
+© Environment Agency copyright 2026.
 
 .. _Open Government Licence (OGL): https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
