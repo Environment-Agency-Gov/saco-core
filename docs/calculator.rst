@@ -54,13 +54,13 @@ surpluses/deficits and compliance classifications:
        scenario flows (also "ups") for each waterbody. The tool also identifies the
        consistent "sub" scenario flows for reference.
     3. Calculate updated surplus/deficit numbers for each waterbody as the new scenario
-       flow minus the EFI. If an alternative flow target table/column has been
-       specified then surplus/deficit relative to this target can also be calculated at
-       the same time.
+       flow minus the reference flow (typically EFI). If an alternative flow target
+       table/column has been specified then surplus/deficit relative to this target
+       can also be calculated at the same time.
     4. Identify the compliance band associated with the new scenario flow. The band is
-       obtained by dividing the surplus/deficit (relative to the EFI) by the natural
-       flow ("ups") and then comparing this quantity with the band definitions in the
-       table below.
+       obtained by dividing the surplus/deficit (relative to the reference flow) by the
+       natural flow ("ups") and then comparing this quantity with the band definitions
+       in the table below.
 
 *Compliance band definitions based on deficit (D) and natural flow (Qn)*
 

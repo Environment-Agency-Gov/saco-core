@@ -17,10 +17,11 @@ import networkx as nx
 
 from .tables import (
     Table, DataTable, IntegratedWBs_NBB, QNaturalFlows_NBB, AbsSensBands_NBB,
-    SWABS_NBB, GWABs_NBB,Discharges_NBB, SupResGW_NBB, ASBPercentages, EFI, Master
+    SWABS_NBB, GWABs_NBB, Discharges_NBB, SupResGW_NBB, ASBPercentages, REFS_NBB,
+    Seasonal_Lookup, Fix_Flags, Master
 )
 from .config import Constants
-from .utils import check_if_output_path_exists, infill_cols
+from .utils import check_if_output_path_exists
 
 
 class Dataset:
@@ -85,11 +86,17 @@ class Dataset:
         #: tables.SupResGW_NBB: Instance of complex impacts table.
         self.sup = SupResGW_NBB()
 
-        #: tables.asb_percs: Instance of ASB percentage definitions table.
+        #: tables.ASBPercentages: Instance of ASB percentage definitions table.
         self.asb_percs = ASBPercentages()
 
-        #: tables.EFI: Instance of environmental flow indicator (EFI) table.
-        self.efi = EFI()
+        #: tables.REFS_NBB: Instance of reference flow (EFI+) table.
+        self.refs = REFS_NBB()
+
+        #: tables.Seasonal_Lookup: Instance of SWABS disaggregation factors table.
+        self.sfac = Seasonal_Lookup()
+
+        #: tables.Fix_Flags: Instance of (optional) waterbody fix flags table.
+        self.wbfx = Fix_Flags()
 
         #: tables.Master: Instance of waterbody level "master" table.
         self.mt = Master(self.scenarios, self.percentiles)
@@ -100,7 +107,7 @@ class Dataset:
 
     def load_tables(
             self, skip_tables: List[str] = None, set_index: bool = False,
-            validate: bool = False,
+            validate: bool = False, optional_tables: List[str] = None,
     ):
         """
         Load data tables from parquet files (sets *data* attributes of tables).
@@ -112,14 +119,25 @@ class Dataset:
                 for files written by data preparation routine).
             validate: Whether to validate data tables against their schemas (again not
                 typically required after data have been prepared).
+            optional_tables: Tables to be loaded if available in data_folder but skipped
+                if unavailable. The default (None) indicates that the Fix_Flags table
+                is the only optional table.
 
         """
         if skip_tables is None:
             skip_tables = []
+        if optional_tables is None:
+            optional_tables = ['Fix_Flags']
 
         for table in self.tables:
             if table.name not in skip_tables:
-                table.load_data(self.data_folder, set_index, validate)
+                try:
+                    table.load_data(self.data_folder, set_index, validate)
+                except FileNotFoundError:
+                    if table.name not in optional_tables:
+                        raise FileNotFoundError(
+                            f'File for table {table.name} not found in {self.data_folder}'
+                        )
 
     def load_graph(self):
         """Load directed graph defining waterbody network (sets *graph* attribute)."""
@@ -133,7 +151,7 @@ class Dataset:
 
     def load_data(
             self, skip_tables: List[str] = None, set_index: bool = False,
-            validate: bool = False,
+            validate: bool = False, optional_tables: List[str] = None,
     ):
         """
         Load data tables, directed graph (waterbody network) and routing matrix.
@@ -149,9 +167,12 @@ class Dataset:
                 for files written by data preparation routine).
             validate: Whether to validate data tables against their schemas (again not
                 typically required after data have been prepared).
+            optional_tables: Tables to be loaded if available in data_folder but skipped
+                if unavailable. The default (None) indicates that the Fix_Flags table
+                is the only optional table.
 
         """
-        self.load_tables(skip_tables, set_index, validate)
+        self.load_tables(skip_tables, set_index, validate, optional_tables)
         self.load_graph()
         self.load_routing_matrix()
 
@@ -220,7 +241,7 @@ class Dataset:
     def write_tables(
             self, output_folder: Union[Path, str], overwrite: bool = False,
             table_names: List[str] = None, output_format: str = 'parquet',
-            zip_name: str = None,
+            zip_name: str = None, decimal_places: float = None,
     ):
         """
         Write data tables to parquet or (zipped) csv files.
@@ -233,6 +254,8 @@ class Dataset:
             output_format: Either 'parquet' or 'zip-csv' (currently).
             zip_name: Optional name of zip archive if output_format is 'zip-csv'. If
                 not provided zip archive name will default to 'dataset.zip'.
+            decimal_places: Number of decimal places to use in rounding. If None
+                (default) then no rounding is applied.
 
         """
         if table_names is None:
@@ -246,8 +269,15 @@ class Dataset:
             for table in tables:
                 output_path = os.path.join(output_folder, table.file_name)
                 check_if_output_path_exists(output_path, overwrite)
+
                 cols = sorted(table.data.columns)
-                table.data[cols].to_parquet(output_path, index=True)
+
+                if decimal_places is None:
+                    df = table.data
+                else:
+                    df = table.data.round(decimal_places)
+
+                df[cols].to_parquet(output_path, index=True)
 
         elif output_format == 'zip-csv':
             if zip_name is None:
@@ -264,6 +294,11 @@ class Dataset:
                 for table in tables:
                     cols = sorted(table.data.columns)
 
+                    if decimal_places is None:
+                        df = table.data
+                    else:
+                        df = table.data.round(decimal_places)
+
                     # Use ZipInfo object to get sensible file creation timestamp
                     now = datetime.datetime.now()
                     date_time = (
@@ -272,7 +307,7 @@ class Dataset:
                     zi = zipfile.ZipInfo(f'{table.name}.csv', date_time)
                     zi.compress_type = zipfile.ZIP_DEFLATED
 
-                    output_data = table.data[cols].to_csv().encode('utf-8')
+                    output_data = df[cols].to_csv().encode('utf-8')
                     zf.writestr(zi, output_data)
 
         else:
@@ -430,8 +465,9 @@ class Dataset:
         return upstream_waterbodies
 
     def set_flow_targets(
-            self, overall_target: str = 'compliant', custom_targets: Dict = None,
-            overwrite_existing: bool = False, df: pd.DataFrame = None,
+            self, overall_target: str = 'compliant', use_fix_flags_table: bool = True,
+            custom_targets: Dict = None, overwrite_existing: bool = False,
+            df: pd.DataFrame = None,
     ):
         """
         Set flow target columns in Master table (in *Dataset.mt.data* attribute).
@@ -440,6 +476,8 @@ class Dataset:
             overall_target: Overall flow target to use for all waterbodies (which can
                 be overridden by custom_targets and/or df arguments. See notes below for
                 valid arguments.
+            use_fix_flags_table: Whether to use Fix_Flags table if available in the
+                Dataset.
             custom_targets: For overriding overall_target for specific waterbodies. See
                 discussion/example below for a guide to formulating this dictionary.
             overwrite_existing: Whether to overwrite any flow target columns that
@@ -456,7 +494,8 @@ class Dataset:
 
             Valid arguments for overall_target are: 'compliant', 'band-1', 'band-2',
             'band-3', 'none' and 'no-det'. The first four options refer to compliance
-            bands (relative to the EFI). In each case, the target is the minimum flow
+            bands (relative to the EFI unless a waterbody has a different target, which
+            will be indicated by its ASB). In each case, the target is the minimum flow
             needed to achieve the band (i.e. the lower bound/edge of the band). 'none'
             and 'band-3' are aliases (i.e. no flow target / trivial target of zero).
 
@@ -466,6 +505,14 @@ class Dataset:
             appropriate band. Note that this is not the same as no change between the
             RA and FL scenario flows (which could be implemented by passing an
             appropriate dataframe via the df argument).
+
+            If the ``use_fix_flags_table`` argument is set to True, the Fix_Flags table
+            will be used to define initial targets (if present in the Dataset). The
+            Fix_Flags table indicates whether the target for each waterbody is
+            compliance (3), no deterioration (0) or none/do-not-fix (-1). The table is
+            intended to align with targets used in the National Framework 2
+            Environmental Destination work programme. Note that the ``custom_targets``
+            and ``df`` arguments will override the Fix_Flags table if provided.
 
             The custom_targets argument can be used to override the overall_target for
             specific waterbodies. It should be provided as a dictionary of dictionaries,
@@ -486,7 +533,9 @@ class Dataset:
         if overall_target not in valid_targets:
             raise ValueError(f'Overall flow target not recognised: {overall_target}')
 
-        df0 = self._calculate_flow_targets(overall_target, custom_targets)
+        df0 = self._calculate_flow_targets(
+            overall_target, use_fix_flags_table, custom_targets,
+        )
 
         qt_cols = self.mt.get_value_columns(self.constants.qt_abb)
         if not overwrite_existing:
@@ -646,8 +695,77 @@ class Dataset:
         else:
             self.sup.data[self.sup.optimise_flag_column] = 0
 
+    def infer_mean_abstraction(
+            self, scenario: str = 'FL', percentile: int = 95,
+            exclude_swabs_with_hofs: bool = True, exclude_gwabs: List[str] = None,
+            exclude_swabs: List[str] = None,
+    ):
+        """
+        Infer mean abstraction from impacts under a given scenario and percentile.
+
+        Args:
+            scenario: Abbreviation of artificial influences scenario used as basis for
+                inferring long-term average abstraction.
+            percentile: Flow percentile (natural) used as basis for inferring long-term
+                average abstraction.
+            exclude_swabs_with_hofs: Whether to exclude SWABS with HOFs from long-term
+                average calculations.
+            exclude_gwabs: Groundwater abstractions whose long-term average should not
+                be inferred. List should contain entries from UNIQUEID in GWABs_NBB.
+            exclude_swabs: Surface water abstractions whose long-term average should not
+                be inferred. List should contain entries from UNIQUEID in SWABS_NBB.
+
+        Notes:
+
+            WRGIS models the relationships between long-term average abstraction and
+            impacts at different flow percentiles. Here we use these relationships to
+            estimate long-term average abstraction given impacts at specific (single)
+            flow percentile. This is done under an assumption that the relative
+            seasonal/FDC profile of impacts remains constant.
+
+            The impact under a given scenario/percentile combination includes the
+            effect of local consumptiveness. The long-term average numbers calculated
+            using this method *exclude* local consumptiveness. This is reflected by the
+            "WR" vs "NR" suffixes in the impact numbers for a specific percentile (WR =
+            "water returned") vs the long-term average abstraction numbers (NR = "no
+            water returned").
+
+            Lists of abstractions to be excluded from long-term average calculations can
+            be supplied via the exclude_gwabs and exclude_swabs arguments. Abstractions
+            to be excluded should be specified using their UNIQUEID. If a long-term
+            average column is already present before this method is called, the existing
+            value will be retained. If not, a NaN will be inserted for these
+            abstractions.
+
+            This method operates only for the SWABS_NBB and GWABs_NBB tables. Complex
+            abstractions/impacts in the SupResGW_NBB table are not handled. By default,
+            SWABS with HOFs are excluded from long-term average calculations (see
+            ``exclude_swabs_with_hofs`` argument). This is because the method may not
+            yield a reasonable long-term average abstraction if the impact in SWABS_NBB
+            at the reference percentile is being constrained by the HOF condition.
+
+            For example, a SWAB might be "off" at Q95 due to a HOF condition. However,
+            it might well be unreasonable for its long-term average to become zero.
+            Hence it is not appropriate to apply the seasonal disaggregation factors to
+            obtain a revised long-term average in this case.
+
+        """
+        if exclude_gwabs is None:
+            exclude_gwabs = []
+        if exclude_swabs is None:
+            exclude_swabs = []
+
+        if self.gwabs.data.shape[0] > 0:
+            self.gwabs.infer_mean_abstraction(scenario, percentile, exclude_gwabs)
+
+        if self.swabs.data.shape[0] > 0:
+            self.swabs.infer_mean_abstraction(
+                scenario, percentile, self.sfac, exclude_swabs_with_hofs, exclude_swabs,
+            )
+
     def _calculate_flow_targets(
-            self, overall_target: str, custom_targets: Dict = None,
+            self, overall_target: str, use_fix_flags_table: bool = True,
+            custom_targets: Dict = None,
     ) -> pd.DataFrame:
         """See docstring for set_flow_targets, for which this method is a helper."""
         col_mapper = {
@@ -657,21 +775,21 @@ class Dataset:
 
         df = self.mt.data.copy()
         for scenario, percentile in itertools.product(self.scenarios, self.percentiles):
-            efi_col = self.mt.get_efi_column(percentile)
+            refs_col = self.mt.get_refs_column(percentile)
             qt_col = self.mt.get_qt_column(scenario, percentile)
             qnat_col = self.mt.get_qnat_column(percentile, self.constants.ups_abb)
             ra_comp_col = self.mt.get_comp_column(self.constants.ra_abb, percentile)
 
-            df['__COMPLIANT'] = df[efi_col]
+            df['__COMPLIANT'] = df[refs_col]
             f1 = self.constants.compliance_bin_edges[2]
-            df['__BAND1'] = df[efi_col] + f1 * df[qnat_col]
+            df['__BAND1'] = df[refs_col] + f1 * df[qnat_col]
             f2 = self.constants.compliance_bin_edges[1]
-            df['__BAND2'] = df[efi_col] + f2 * df[qnat_col]
+            df['__BAND2'] = df[refs_col] + f2 * df[qnat_col]
             df['__BAND3'] = 0.0
             df['__NONE'] = 0.0
 
             if ra_comp_col in df.columns:
-                df['__NO_DET'] = df[efi_col]
+                df['__NO_DET'] = df[refs_col]
                 df['__NO_DET'] = np.where(
                     df[ra_comp_col] == 1, df['__BAND1'], df['__NO_DET']
                 )
@@ -687,7 +805,29 @@ class Dataset:
                     'Calculator to obtain suitable Dataset.'
                 )
             else:
-                df[qt_col] = df[col_mapper[overall_target]]
+                # TODO: Consider warning if Fix_Flags table not present?
+                if use_fix_flags_table and (self.wbfx.data is not None):
+                    df[qt_col] = df['__COMPLIANT']
+                    df[qt_col] = np.where(
+                        df.index.isin(
+                            self.wbfx.data.loc[
+                                self.wbfx.data[self.wbfx.fix_flag_column] == self.wbfx.targets['no-det']
+                            ].index.tolist()
+                        ),
+                        df['__NO_DET'],
+                        df[qt_col]
+                    )
+                    df[qt_col] = np.where(
+                        df.index.isin(
+                            self.wbfx.data.loc[
+                                self.wbfx.data[self.wbfx.fix_flag_column] == self.wbfx.targets['none']
+                            ].index.tolist()
+                        ),
+                        df['__NONE'],
+                        df[qt_col]
+                    )
+                else:
+                    df[qt_col] = df[col_mapper[overall_target]]
 
             if custom_targets is not None:
                 k = (scenario, percentile)
@@ -785,7 +925,7 @@ class Dataset:
 
     @property
     def derived_table_names(self) -> List[str]:
-        return ['EFI', 'FlowTargets', 'Master']
+        return ['REFS_NBB', 'Master', 'Fix_Flags']
 
     @property
     def input_tables(self) -> List[Table]:
@@ -915,8 +1055,11 @@ def subset_dataset_on_wbs(ds: Dataset, waterbodies: List[str]) -> Dataset:
     ds1 = Dataset()
 
     for table in ds.tables:
-        if table.name == 'ASBPercentages':
+        if table.name in ['ASBPercentages', 'Seasonal_Lookup']:
             df = table.data
+
+        elif (table.name == 'Fix_Flags') and (table.data is None):
+            df = None
 
         elif table.name in ds.waterbody_id_table_names:
             df = df_wbs.merge(
@@ -955,7 +1098,10 @@ def subset_dataset_on_wbs(ds: Dataset, waterbodies: List[str]) -> Dataset:
                 )
                 df.index.name = table.index_name
 
-        ds1.get_table(table.name).set_data(df.copy())
+        if df is None:
+            pass
+        else:
+            ds1.get_table(table.name).set_data(df.copy())
 
     ds1.set_graph()
     ds1.set_routing_matrix()
@@ -1000,6 +1146,18 @@ def subset_dataset_on_columns(
                 aux_cols = [
                     col for col in table.data.columns if col not in old_value_cols
                 ]
+
+                if table.name in ['SWABS_NBB', 'GWABs_NBB']:
+                    _aux_cols = []
+                    for col in aux_cols:
+                        if f'{table.variable_abb}LTA' in col:
+                            scenario = col.replace(f'{table.variable_abb}LTA', '')[:-2]
+                            if scenario in scenarios:
+                                _aux_cols.append(col)
+                        else:
+                            _aux_cols.append(col)
+                    aux_cols = _aux_cols
+
                 cols = list(set(aux_cols + table.value_columns))
                 cols = [col for col in cols if col in table.data.columns]
                 df = table.data[cols].copy()
@@ -1020,6 +1178,9 @@ def concatenate_datasets(
     Intended to help concatenate datasets that include the same domain and artificial
     influences but different value columns (scenario and percentile combinations). The
     method assumes that input datasets do not contain "overlapping" value columns.
+
+    For SWABS_NBB and GWABs_NBB, any long-term average columns will be taken from the
+    first Dataset listed in the *datasets* argument (for each scenario).
 
     Args:
         datasets: Datasets to concatenate.
@@ -1043,9 +1204,18 @@ def concatenate_datasets(
         percentiles.append(ds.percentiles[0])
 
         for table in ds.tables:
-            if table.name not in tables_to_skip:
+            if (table.name in tables_to_skip) or (table.data is None):
+                pass
+            else:
+                candidate_cols = [col for col in table.value_columns]
+
+                if table.name in ['SWABS_NBB', 'GWABs_NBB']:
+                    for scenario in scenarios:
+                        lta_col = table.get_lta_column(scenario)
+                        candidate_cols.append(lta_col)
+
                 merge_cols = []
-                for col in table.value_columns:
+                for col in candidate_cols:
                     if col not in ds1.get_table(table.name).data.columns:
                         merge_cols.append(col)
 
@@ -1086,7 +1256,7 @@ def find_differences(
     in ds2 then the difference will come through as negative (i.e. a reduction in
     impact).
 
-    Function will only work for tables that are derived from tables.DataTable class
+    The function will only work for tables that are derived from tables.DataTable class
     (currently).
 
     Args:
@@ -1111,6 +1281,11 @@ def find_differences(
         df1 = ds1.get_table(table_name).data
         df2 = ds2.get_table(table_name).data
 
+        if (df1 is None) or (df2 is None):
+            raise ValueError(
+                f'Table {table_name} has no data in one or both input datasets.'
+            )
+
         if require_rows_match:
             if df1.shape[0] == df2.shape[0]:
                 if not np.all(df1.sort_index() == df2.sort_index()):
@@ -1125,15 +1300,21 @@ def find_differences(
             else:
                 raise ValueError(f'Different numbers of columns for table {table_name}.')
 
+        # Include long-term average columns for SWABS and GWABS if available
+        value_cols = [col for col in ds2.get_table(table_name).value_columns]
+        if table_name in ['SWABS_NBB', 'GWABs_NBB']:
+            for scenario in ds2.scenarios:
+                lta_col = ds2.get_table(table_name).get_lta_column(scenario)
+                if lta_col in ds2.get_table(table_name).data.columns:
+                    value_cols.append(lta_col)
+
         # Difference calculations
-        ref_cols = [
-            col for col in df1.columns if col in ds2.get_table(table_name).value_columns
-        ]
+        ref_cols = [col for col in df1.columns if col in value_cols]
         df3 = pd.merge(
             df2, df1[ref_cols], how='left', left_index=True, right_index=True,
             suffixes=(None, '__REF'),
         )
-        for value_col in ds2.get_table(table_name).value_columns:
+        for value_col in value_cols:
             df3[value_col] -= df3[f'{value_col}__REF']
 
             if significance_threshold is not None:

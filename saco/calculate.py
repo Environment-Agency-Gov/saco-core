@@ -85,6 +85,10 @@ class Calculator:
               waterbody if its flow has been increased to zero.
             - Do nothing (capping_method=None): allow negative scenario flows in output.
 
+        Any long-term average abstraction columns present in the input Dataset are not
+        updated by the Calculator when it returns a Dataset. If these fields are
+        required a user should call ``Dataset.infer_mean_abstraction`` explicitly.
+
     Examples:
         >>> from saco import Dataset, Calculator
         >>>
@@ -248,9 +252,9 @@ class Calculator:
         # scenario or percentile as factors
         df = df.loc[:, ~df.columns.duplicated()].copy()
 
-        # Incorporate EFI and flow targets (the latter only if they have been set
-        # previously on the input dataset [its master table])
-        df = pd.merge(df, self.ds.efi.data, left_index=True, right_index=True)
+        # Incorporate reference flows and flow targets (the latter only if they have
+        # been set previously on the input dataset [its master table])
+        df = pd.merge(df, self.ds.refs.data, left_index=True, right_index=True)
         if self.ds.mt.data is not None:
             qt_cols = []
             for scenario, percentile in itertools.product(self.scenarios, self.percentiles):
@@ -405,19 +409,20 @@ class Calculator:
 
     def calculate_deficit(self):
         """
-        Calculate deficit relative to EFI (updating master table).
+        Calculate deficit relative to reference flows (updating master table).
 
-        Note that EFI might not be flow target in Dataset.
+        Note that the EFI (or another reference flow) might not be the flow target in a
+        Dataset if the flow target has been overridden.
 
         """
         for scenario, percentile in itertools.product(self.scenarios, self.percentiles):
             scen_col = self.ds.mt.get_scen_column(scenario, percentile, self.constants.ups_abb)
-            efi_col = self.ds.mt.get_efi_column(percentile)
+            refs_col = self.ds.mt.get_refs_column(percentile)
             sd_col = self.ds.mt.get_sd_column(scenario, percentile)
-            self.ds.mt.data[sd_col] = self.ds.mt.data[scen_col] - self.ds.mt.data[efi_col]
+            self.ds.mt.data[sd_col] = self.ds.mt.data[scen_col] - self.ds.mt.data[refs_col]
 
     def assess_compliance(self):
-        """Assess compliance band (updating master table."""
+        """Assess compliance band (updating master table)."""
         for scenario, percentile in itertools.product(self.scenarios, self.percentiles):
             nat_col = self.ds.mt.get_qnat_column(percentile, self.constants.ups_abb)
             sd_col = self.ds.mt.get_sd_column(scenario, percentile)
@@ -445,7 +450,7 @@ class Calculator:
                 ] = self.na_value
 
     def calculate_target_deficit(self):
-        """Calculate deficit relative to flow target (which may not be EFI)."""
+        """Calculate deficit relative to flow target (which may not be EFI/REFS)."""
         for scenario, percentile in itertools.product(self.scenarios, self.percentiles):
             scen_col = self.ds.mt.get_scen_column(
                 scenario, percentile, self.constants.ups_abb

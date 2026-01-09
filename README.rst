@@ -14,18 +14,30 @@ Installation
 ------------
 
 After cloning the repository (or downloading/unzipping a specific release), create a
-new Python environment (e.g. a virtual environment or conda environment). Then in
-a terminal navigate to the root of the repository and install the package with::
+new Python environment (e.g. a virtual environment or conda environment). The version
+of Python should be at least 3.13. Then in a terminal navigate to the root of the
+repository. To install the package, core dependencies and JupyterLab (e.g. for running
+the example notebook) at the same time (recommended for most users), use the command::
 
-    pip install -e .
+    pip install .[jupyter]
 
 Note that:
 
+    - The ``[jupyter]`` part may be dropped if JupyterLab is not required (i.e. for a
+      minimal installation, just use the command ``pip install .``).
     - The environment.yml file in the repository root can be optionally used to create
       a conda environment with the same dependency versions used in initial development
       and testing.
-    - The ``-e`` flag is optional (for installing the package in editable/developer
-      mode).
+    - A ``-e`` flag can be used to install the package in editable/developer mode if
+      needed.
+    - Some users may wish to install via ``pip install -e .[jupyter,dev]`` to obtain
+      additional packages used for testing and building documentation (which may not be
+      relevant to all users).
+
+To upgrade to a new release, one approach is to download/unzip the release, navigate in
+the terminal to its root directory (containing ``pyproject.toml``, ...) and enter::
+
+    pip install . --upgrade
 
 Documentation
 -------------
@@ -72,6 +84,6 @@ features, or functionality. Users should check for updated versions.
 The release of the SACO tool does not imply any obligation on the part of the
 Environment Agency to provide maintenance, support, or continued availability.
 
-© Environment Agency copyright 2025.
+© Environment Agency copyright 2026.
 
 .. _Open Government Licence (OGL): https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/

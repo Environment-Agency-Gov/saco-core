@@ -1,0 +1,14 @@
+The Open Government Licence (OGL) Version 3
+
+Copyright (c) 2026 Environment Agency
+
+This source code is licensed under the Open Government Licence v3. To view this licence,
+please visit https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+or write to:
+
+Information Policy Team,
+The National Archives,
+Kew,
+Richmond,
+Surrey,
+TW9 4DU.
