@@ -22,7 +22,7 @@ jobs:
         python-version: '3.13'
 
     - name: Install dependencies
-      run: pip install -e .
+      run: pip install -e .[dev]
 
     - name: Build HTML
       run: |
