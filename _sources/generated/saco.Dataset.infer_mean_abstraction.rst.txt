@@ -1,0 +1,6 @@
+﻿saco.Dataset.infer\_mean\_abstraction
+=====================================
+
+.. currentmodule:: saco
+
+.. automethod:: Dataset.infer_mean_abstraction

@@ -56,18 +56,19 @@ A Dataset object has individual data tables as its most important attributes. Fo
 WRGIS (with "swabs" being the "short name" for SWABS_NBB). Similar attributes exist for
 the other key WRGIS tables listed below:
 
-    - ``swabs``: SWABS_NBB (point surface water abstractions)
-    - ``gwabs``: GWABs_NBB (point groundwater abstractions)
-    - ``dis``: Discharges_NBB (point surface water discharges)
-    - ``sup``: SupResGW_NBB (point "complex impacts")
-    - ``qnat``: QNaturalFlows_NBB (waterbody natural flows)
-    - ``wbs``: IntegratedWBs_NBB (waterbody metadata)
     - ``asbs``: AbsSensBands_NBB (waterbody abstraction sensitivity bands)
-    - ``asb_percs``: ASBPercentages (fractional deviations defining the EFI)
+    - ``asb_percs``: ASBPercentages (fractional deviations defining the reference flows
+      - typically environmental flow indicator, EFI)
+    - ``dis``: Discharges_NBB (point surface water discharges)
+    - ``gwabs``: GWABs_NBB (point groundwater abstractions)
+    - ``qnat``: QNaturalFlows_NBB (waterbody natural flows)
+    - ``refs``: REFS_NBB (reference flows - typically EFI)
+    - ``sup``: SupResGW_NBB (point "complex impacts")
+    - ``swabs``: SWABS_NBB (point surface water abstractions)
+    - ``wbs``: IntegratedWBs_NBB (waterbody metadata)
 
-Two additional tables that are not in WRGIS are derived and included in a ``Dataset``:
+An additional table that is not in WRGIS is derived and included in a ``Dataset``:
 
-    - ``efi``: EFI (waterbody environmental flow indicator)
     - ``mt``: Master (waterbody summary table - water balance terms, compliance, etc)
 
 The Master table is intended to be the key waterbody-level table that brings together
@@ -107,6 +108,14 @@ merge/join operations etc.
     typical user (in general). See below about (1) using the Calculator to obtain an
     updated Master table and (2) using specific methods to ensure that a Dataset and
     its Master table are ready to go into the Optimiser.
+
+.. note::
+
+    If a user changes a surface or groundwater abstraction impact in a ``Dataset``
+    under a given artificial influences scenario and at a given (natural) flow
+    percentile, any long-term average abstraction columns in the relevant table are
+    *not* automatically updated (currently). See :doc:`reference-dataset` for
+    explanation of the available options to make this calculation if needed.
 
 Other Functionality
 ~~~~~~~~~~~~~~~~~~~
@@ -168,6 +177,12 @@ These are just a couple of examples of customisation via optional arguments - se
     Master table gives the "target" artificial influences components, which are not
     capped individually.
 
+.. note::
+
+    Any long-term average fields in a ``Dataset`` passed to the ``Calculator`` are *not*
+    changed by the execution of the ``Calculator.run`` method currently (i.e. they are
+    unchanged in the ``Dataset`` or Master table returned).
+
 Optimiser
 ---------
 
@@ -207,6 +222,22 @@ included/excluded in optimisation.
     If any further manipulation of the inclusion/exclusion flag is needed it could be
     achieved by working with the relevant dataframes (i.e. ``ds.swabs.data``,
     ``ds.gwabs.data`` and ``ds.sup.data``).
+
+.. note::
+
+    For users interested in Environmental Destination (ED) modelling, it should be noted
+    that the default behaviour of the ``Dataset.set_optimise_flag`` method does not
+    mimic exactly the configuration used in ED modelling for the second National
+    Framework for Water Resources. It is important for a user to check that they are
+    happy with the flag setup.
+
+.. note::
+
+    Waterbody targets can be (optionally) specified via a separate *Fix_Flags* table
+    that sits within a ``Dataset`` (accessible via the short name ``wbfx``). If present
+    in a ``Dataset``, the flags in this table will be used to customise flow targets
+    (i.e. permitting further relaxation beyond the flow in REFS_NBB). See :doc:`fields`
+    for more details.
 
 Optional Arguments
 ~~~~~~~~~~~~~~~~~~
@@ -249,9 +280,18 @@ apart from (keeping complex impacts to one side for the moment):
     - Similarly, the Master table summarises the water balance and compliance etc for
       the solution formulated by the ``Optimiser``.
     - Additional tables are present: SWABS_Changes and GWABS_Changes (accessible via
-      the output dataset's attributes ``swabs_chg`` and ``gwab_chg``, respectively.
+      the output ``Dataset``'s attributes ``swabs_chg`` and ``gwab_chg``, respectively.
       These tables contain the impact reductions (Ml/d) required relative to a
       “reference” ``Dataset`` - see :doc:`reference-optimise`.
+
+.. note::
+
+    Long-term average abstraction is recalculated after optimisation under the
+    assumption that the relative impact profile across the FDC remains constant.
+    However, SWABS with hands-off flow (HOF) conditions are omitted from the
+    recalculation at present to avoid introducing a conservative bias into the
+    estimates. See :doc:`reference-dataset` and :doc:`reference-optimise` for more
+    details.
 
 Complex Impacts
 ~~~~~~~~~~~~~~~
@@ -272,14 +312,14 @@ If we wish to include specific complex impacts in optimisation, we need to manua
 adjust the flag column for the appropriate rows. This can be achieved in memory using
 dataframe operations, for example::
 
-    ds.sup.data[ds.sup.data.index == 'complex-impact-id', 'Optimise_Flag'] = 1
+    ds.sup.data.loc[ds.sup.data.index == 'complex-impact-id', 'Optimise_Flag'] = 1
 
 If we specify that a reservoir compensation flow increase is allowed in optimisation,
 we also need to indicate that maximum increase permitted. This should be done for the
 relevant scenarios and percentiles under consideration. For example, to permit a maximum
 reservoir compensation flow increase of 5.0 Ml/d, we could do the following::
 
-    ds.sup.data[ds.sup.data.index == 'complex-impact-id', 'SUPFLQ95_MAX_INCREASE'] = 5.0
+    ds.sup.data.loc[ds.sup.data.index == 'complex-impact-id', 'SUPFLQ95_MAX_INCREASE'] = 5.0
 
 Once the flag field and any maximum increase fields have been added to the relevant
 ``Dataset`` table, the ``Optimiser`` can be run in the way described above. Outputs are

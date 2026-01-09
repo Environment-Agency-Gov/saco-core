@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="saco.Dataset.set_flow_targets" href="saco.Dataset.set_flow_targets.html" />
-    <link rel="prev" title="saco.Dataset.identify_upstream_waterbodies" href="saco.Dataset.identify_upstream_waterbodies.html" /> 
+    <link rel="prev" title="saco.Dataset.infer_mean_abstraction" href="saco.Dataset.infer_mean_abstraction.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -57,6 +57,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../reference-dataset.html#saco.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="saco.Dataset.find_outlet_waterbodies.html">saco.Dataset.find_outlet_waterbodies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saco.Dataset.identify_upstream_waterbodies.html">saco.Dataset.identify_upstream_waterbodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saco.Dataset.infer_mean_abstraction.html">saco.Dataset.infer_mean_abstraction</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">saco.Dataset.load_data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.load_data"><code class="docutils literal notranslate"><span class="pre">Dataset.load_data()</span></code></a></li>
 </ul>
@@ -100,7 +101,7 @@
 <h1>saco.Dataset.load_data<a class="headerlink" href="#saco-dataset-load-data" title="Link to this heading"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="saco.Dataset.load_data">
-<span class="sig-prename descclassname"><span class="pre">Dataset.</span></span><span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">skip_tables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saco.Dataset.load_data" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">Dataset.</span></span><span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">skip_tables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional_tables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saco.Dataset.load_data" title="Link to this definition"></a></dt>
 <dd><p>Load data tables, directed graph (waterbody network) and routing matrix.</p>
 <p>Sets <em>data</em>, <em>graph</em> and <em>routing_matrix</em> attributes. Load methods use
 <em>data_folder</em> attribute of Dataset and <em>file_name</em> attributes of tables. See
@@ -114,6 +115,9 @@
 for files written by data preparation routine).</p></li>
 <li><p><strong>validate</strong> – Whether to validate data tables against their schemas (again not
 typically required after data have been prepared).</p></li>
+<li><p><strong>optional_tables</strong> – Tables to be loaded if available in data_folder but skipped
+if unavailable. The default (None) indicates that the Fix_Flags table
+is the only optional table.</p></li>
 </ul>
 </dd>
 </dl>
@@ -125,7 +129,7 @@ typically required after data have been prepared).</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="saco.Dataset.identify_upstream_waterbodies.html" class="btn btn-neutral float-left" title="saco.Dataset.identify_upstream_waterbodies" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="saco.Dataset.infer_mean_abstraction.html" class="btn btn-neutral float-left" title="saco.Dataset.infer_mean_abstraction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="saco.Dataset.set_flow_targets.html" class="btn btn-neutral float-right" title="saco.Dataset.set_flow_targets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

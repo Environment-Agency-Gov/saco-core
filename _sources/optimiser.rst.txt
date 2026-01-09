@@ -39,11 +39,13 @@ percentile independently of other percentiles.
 
 .. note::
 
-    It is possible to translate the solution for a given percentile into a set of
-    long-term average changes under the assumption of constant (relative) seasonal
-    profiles. The functionality for this will be added to the package shortly, although
-    alternative approaches may relax this assumption to a degree. Future work may seek
-    to optimise "across the FDC" in a more holistic manner.
+    Functionality has been added to translate the solution for a given percentile into
+    a set of long-term average changes under the assumption of constant (relative)
+    impact profiles across the flow duration curve (FDC) or seasonally. See the
+    ``infer_mean_abstraction`` entry in :doc:`reference-dataset` and the notes in
+    :doc:`reference-optimise`. We also note that alternative approaches could
+    be used to relax the assumption to a degree and that future work may seek to
+    optimise "across the FDC" in a more holistic manner.
 
 Once solved, by looking at the relevant edges we can get at the following terms:
 
@@ -154,10 +156,11 @@ being used. These constraints may be summarised as:
 
 .. note::
 
-    If a target cannot be feasibly met, it will be dropped and a warning message
-    displayed. This situation can occur if some impacts are held constant (e.g. complex
-    impacts) that have a large effect on flows. See :doc:`reference-optimise` for more
-    details.
+    If a target cannot be feasibly met, by default it will be dropped and a warning
+    message displayed. This situation can occur if some impacts are held constant (e.g.
+    complex impacts) that have a large effect on flows. See :doc:`reference-optimise`
+    for more details, including options on customising behaviour when faced with
+    infeasible targets.
 
 The final constraint listed above constitutes a threshold condition. If flow drops
 beyond some threshold then an abstraction must be switched off. If flow is above the
@@ -216,3 +219,9 @@ and then "relaxing" its total abstraction impact result before applying it as a
 constraint on the secondary objective. This process can be done repeatedly to explore
 how successively larger relaxations (i.e. degrading the primary objective) affect the
 secondary proportional equality objective (or other secondary objectives).
+
+The size of trade-offs may vary between contexts and applications. In some cases any
+trade-offs may be limited, whereas in others they may be important to consider. An
+example of the latter for an anonymised test catchment is shown in the plot below.
+
+.. image:: ./_static/tradeoffs.png

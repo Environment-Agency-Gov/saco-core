@@ -144,12 +144,6 @@ the summary table below:</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p>IntegratedWBs_NBB</p></td>
-<td><p>Defines waterbody network and waterbody properties</p></td>
-</tr>
-<tr class="row-odd"><td><p>QNaturalFlows_NBB</p></td>
-<td><p>Natural flows per waterbody</p></td>
-</tr>
 <tr class="row-even"><td><p>AbsSensBands_NBB</p></td>
 <td><p>Abstraction sensitivity bands (ASBs) per waterbody</p></td>
 </tr>
@@ -157,30 +151,47 @@ the summary table below:</p>
 <td><p>Permitted deviations (fractional) from natural flow by ASB
 and flow percentile</p></td>
 </tr>
-<tr class="row-even"><td><p>SWABS_NBB</p></td>
-<td><p>Surface water abstractions</p></td>
+<tr class="row-even"><td><p>Discharges_NBB</p></td>
+<td><p>Discharges</p></td>
 </tr>
 <tr class="row-odd"><td><p>GWABs_NBB</p></td>
 <td><p>Groundwater abstractions</p></td>
 </tr>
-<tr class="row-even"><td><p>Discharges_NBB</p></td>
-<td><p>Discharges</p></td>
+<tr class="row-even"><td><p>IntegratedWBs_NBB</p></td>
+<td><p>Defines waterbody network and waterbody properties</p></td>
 </tr>
-<tr class="row-odd"><td><p>SupResGW_NBB</p></td>
+<tr class="row-odd"><td><p>QNaturalFlows_NBB</p></td>
+<td><p>Natural flows per waterbody</p></td>
+</tr>
+<tr class="row-even"><td><p>REFS_NBB</p></td>
+<td><p>Reference flows (typically environmental flow indicator)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Seasonal_Lookup</p></td>
+<td><p>Percentile impact factors for surface water abstractions</p></td>
+</tr>
+<tr class="row-even"><td><p>SupResGW_NBB</p></td>
 <td><p>Complex impacts</p></td>
+</tr>
+<tr class="row-odd"><td><p>SWABS_NBB</p></td>
+<td><p>Surface water abstractions</p></td>
 </tr>
 </tbody>
 </table>
-<p>This summary indicates that the SACO tool uses three tables that are indexed by
-waterbody (i.e. one row per waterbody): IntegratedWBs_NBB, QNaturalFlows_NBB and
-AbsSensBands_NBB. ASBPercentages is essentially a metadata table that facilitates
-calculation of the environmental flow indicator (EFI) for each waterbody. The remaining
-four tables of artificial influences are indexed by “point”. For example, a given
-abstraction might have multiple point locations associated with it. The impact of each
-of these points is entered on one row in the relevant table.</p>
+<p>This summary indicates that the SACO tool uses four tables that are indexed by
+waterbody (i.e. one row per waterbody): AbsSensBands_NBB, IntegratedWBs_NBB,
+QNaturalFlows_NBB and REFS_NBB. In contrast, the four tables of artificial influences
+are indexed by “point”. For example, a given abstraction might have multiple point
+locations associated with it. The impact of each of these points is entered on one row
+in the relevant table.</p>
+<p>The remaining two tables are essentially supporting metadata. ASBPercentages facilitates
+calculation of the reference flow in REFS_NBB (typically the environmental flow
+indicator, EFI) for each waterbody. Seasonal_Lookup contains factors that relate
+long-term average surface water abstraction to impacts at a given flow percentile based
+on the seasonality of abstraction.</p>
 <p>All tables except ASBPercentages have a “wide” format, i.e. they may contain multiple
 value columns and no “factor” columns. For example, the abstractions tables contain a
-separate value column for the impact of each combination of scenario and percentile.</p>
+separate value column for the impact on flow at each combination of scenario and
+percentile.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>An abstraction licence may also include multiple “purpose codes” that define the
@@ -236,8 +247,18 @@ flow percentile to create the “base” WRGIS. (As noted above, this assignment
 undertaken by the WRGIS toolset using information from the CAMS ledgers.) The SACO tool
 can explore the implications of changing specific numbers in the tables (via the
 Calculator and Optimiser components outlined in the <a class="reference internal" href="overview.html"><span class="doc">Overview</span></a>), but it does not
-contain all the logic/data through which “base” impacts are assigned in the ledgers and
-WRGIS.</p>
+contain all the logic, data and justification through which “base” impacts are assigned
+in the ledgers and WRGIS.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Functionality has been added to allow estimation of (changes in) long-term average
+abstraction based on (changes) in impacts at a given percentile. See
+<code class="docutils literal notranslate"><span class="pre">infer_mean_abstraction</span></code> method entry in <a class="reference internal" href="reference-dataset.html"><span class="doc">Dataset</span></a>. Additional
+functionality is being added to make the reverse translation (long-term average to
+impacts at a given percentile) and also to reproduce in general how WRGIS derives
+the impacts of surface water abstractions with hands-off flow conditions / reservoir
+support flows (complex impacts of type QMIN).</p>
+</div>
 </section>
 </section>
 <section id="processing">
@@ -251,8 +272,8 @@ package currently. To summarise this functionality, the main processing steps ar
 not required in the SACO tool are filtered out.</p></li>
 <li><p>Convert waterbody relationships into a directed graph (<code class="docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code>).
 This provides useful helper functions/methods for working with the network.</p></li>
-<li><p>Calculate other derived quantities for convenience, including environmental flow
-indicators (EFIs) for each waterbody and flow percentile (as a function of
+<li><p>Calculate other derived quantities for convenience, including reference flows
+(typically EFIs) for each waterbody and flow percentile (as a function of
 abstraction sensitivity band, which defines a permitted fractional deviation from
 the natural flow).</p></li>
 </ul>

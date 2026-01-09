@@ -159,6 +159,9 @@ waterbody if its flow has been increased to zero.</p></li>
 <li><p>Do nothing (capping_method=None): allow negative scenario flows in output.</p></li>
 </ul>
 </div></blockquote>
+<p>Any long-term average abstraction columns present in the input Dataset are not
+updated by the Calculator when it returns a Dataset. If these fields are
+required a user should call <code class="docutils literal notranslate"><span class="pre">Dataset.infer_mean_abstraction</span></code> explicitly.</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">saco</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">Calculator</span>
 <span class="gp">&gt;&gt;&gt;</span>

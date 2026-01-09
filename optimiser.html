@@ -131,11 +131,13 @@ flow percentile that we are interested in. This approach provides a solution for
 percentile independently of other percentiles.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>It is possible to translate the solution for a given percentile into a set of
-long-term average changes under the assumption of constant (relative) seasonal
-profiles. The functionality for this will be added to the package shortly, although
-alternative approaches may relax this assumption to a degree. Future work may seek
-to optimise “across the FDC” in a more holistic manner.</p>
+<p>Functionality has been added to translate the solution for a given percentile into
+a set of long-term average changes under the assumption of constant (relative)
+impact profiles across the flow duration curve (FDC) or seasonally. See the
+<code class="docutils literal notranslate"><span class="pre">infer_mean_abstraction</span></code> entry in <a class="reference internal" href="reference-dataset.html"><span class="doc">Dataset</span></a> and the notes in
+<a class="reference internal" href="reference-optimise.html"><span class="doc">Optimiser</span></a>. We also note that alternative approaches could
+be used to relax the assumption to a degree and that future work may seek to
+optimise “across the FDC” in a more holistic manner.</p>
 </div>
 <p>Once solved, by looking at the relevant edges we can get at the following terms:</p>
 <blockquote>
@@ -243,10 +245,11 @@ abstractions to which they apply.</p></li>
 </div></blockquote>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>If a target cannot be feasibly met, it will be dropped and a warning message
-displayed. This situation can occur if some impacts are held constant (e.g. complex
-impacts) that have a large effect on flows. See <a class="reference internal" href="reference-optimise.html"><span class="doc">Optimiser</span></a> for more
-details.</p>
+<p>If a target cannot be feasibly met, by default it will be dropped and a warning
+message displayed. This situation can occur if some impacts are held constant (e.g.
+complex impacts) that have a large effect on flows. See <a class="reference internal" href="reference-optimise.html"><span class="doc">Optimiser</span></a>
+for more details, including options on customising behaviour when faced with
+infeasible targets.</p>
 </div>
 <p>The final constraint listed above constitutes a threshold condition. If flow drops
 beyond some threshold then an abstraction must be switched off. If flow is above the
@@ -304,6 +307,10 @@ and then “relaxing” its total abstraction impact result before applying it a
 constraint on the secondary objective. This process can be done repeatedly to explore
 how successively larger relaxations (i.e. degrading the primary objective) affect the
 secondary proportional equality objective (or other secondary objectives).</p>
+<p>The size of trade-offs may vary between contexts and applications. In some cases any
+trade-offs may be limited, whereas in others they may be important to consider. An
+example of the latter for an anonymised test catchment is shown in the plot below.</p>
+<img alt="_images/tradeoffs.png" src="_images/tradeoffs.png" />
 </section>
 </section>
 

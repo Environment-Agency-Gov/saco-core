@@ -8,7 +8,7 @@ a *Dataset* as their main input.
 .. currentmodule:: saco
 
 .. autoclass:: Dataset
-   :members: wbs, qnat, asbs, swabs, gwabs, dis, sup, asb_percs, efi, mt
+   :members: wbs, qnat, asbs, swabs, gwabs, dis, sup, asb_percs, efi, sfac, mt
 
    .. automethod:: __init__
 
@@ -19,6 +19,7 @@ a *Dataset* as their main input.
 
       ~Dataset.find_outlet_waterbodies
       ~Dataset.identify_upstream_waterbodies
+      ~Dataset.infer_mean_abstraction
       ~Dataset.load_data
       ~Dataset.set_flow_targets
       ~Dataset.set_optimise_flag
@@ -32,10 +33,12 @@ a *Dataset* as their main input.
       ~Dataset.asbs
       ~Dataset.asb_percs
       ~Dataset.dis
-      ~Dataset.efi
+      ~Dataset.refs
       ~Dataset.gwabs
       ~Dataset.mt
       ~Dataset.qnat
+      ~Dataset.sfac
       ~Dataset.sup
       ~Dataset.swabs
+      ~Dataset.wbfx
       ~Dataset.wbs

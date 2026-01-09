@@ -55,6 +55,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Table Fields</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#sign-conventions">Sign Conventions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#wrgis-table-fields">WRGIS Table Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optional-table-fields">Optional Table Fields</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#derived-table-fields">Derived Table Fields</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#optimiser-required-fields">Optimiser Required Fields</a></li>
 </ul>
@@ -158,18 +159,27 @@ indicated.</p>
 </dd>
 <dt>Discharges_NBB</dt><dd><ul class="simple">
 <li><p>UNID: <em>Unique ID (index column)</em></p></li>
-<li><p>DISCHRA: <em>Discharge impact under RA scenario [Ml/d]</em></p></li>
-<li><p>DISCHFL: <em>Discharge impact under FL scenario [Ml/d]</em></p></li>
-<li><p>DISCHFP: <em>Discharge impact under FP scenario [Ml/d]</em></p></li>
-<li><p>EA_WB_ID: <em>Impacted waterbody ID</em></p></li>
-<li><p>DISNUMBER: <em>Consent number</em></p></li>
-<li><p>SITENAME: <em>Site name</em></p></li>
 <li><p>CONSHOLDER: <em>Consent holder name</em></p></li>
+<li><p>DISCH{S}: <em>Discharge impact under scenario {S} [Ml/d]</em></p></li>
+<li><p>DISNUMBER: <em>Consent number</em></p></li>
+<li><p>EA_WB_ID: <em>Impacted waterbody ID</em></p></li>
+<li><p>SITENAME: <em>Site name</em></p></li>
 </ul>
 </dd>
 <dt>GWABs_NBB</dt><dd><ul class="simple">
 <li><p>UNIQUEID: <em>Unique ID (index column)</em></p></li>
 <li><p>EA_WB_ID: <em>ID of waterbody containing impact point</em></p></li>
+<li><p>GWLTA{S}NR: <em>Long-term average abstraction (no local returns) under scenario {S}
+[Ml/d]</em></p></li>
+<li><p>GWPROPCONS: <em>Abstraction consumptiveness [-]</em></p></li>
+<li><p>GWQ{P}{S}WR: <em>Total abstraction impact at flow percentile {P} under scenario {S}
+(accounting for local consumptiveness) [Ml/d]</em></p></li>
+<li><p>IMPFAC: <em>Factor/flag used in seasonal apportionment of impacts</em></p></li>
+<li><p>LICHOLDER: <em>Licence holder</em></p></li>
+<li><p>LICNUMBER: <em>Licence number</em></p></li>
+<li><p>LICN_EXPD: <em>Licence expiry date or flag (D for deregulated)</em></p></li>
+<li><p>PURPCODE: <em>Abstraction purpose code</em></p></li>
+<li><p>SITENAME: <em>Site name</em></p></li>
 <li><p>WB_1ST: <em>First waterbody receiving impact</em></p></li>
 <li><p>WB_2ND: <em>Second waterbody receiving impact</em></p></li>
 <li><p>WB_3RD: <em>Third waterbody receiving impact</em></p></li>
@@ -180,24 +190,21 @@ indicated.</p>
 <li><p>WB_3RD_PRO: <em>Percentage of total impact received by WB_3RD [%]</em></p></li>
 <li><p>WB_4TH_PRO: <em>Percentage of total impact received by WB_4TH [%]</em></p></li>
 <li><p>WB_5TH_PRO: <em>Percentage of total impact received by WB_5TH [%]</em></p></li>
-<li><p>GWQ{P}{S}WR: <em>Total abstraction impact at flow percentile {P} under scenario {S}
-(accounting for local consumptiveness) [Ml/d]</em></p></li>
-<li><p>LICN_EXPD: Licence expiry date or flag (D for deregulated)</p></li>
-<li><p>LICNUMBER: <em>Licence number</em></p></li>
-<li><p>SITENAME: <em>Site name</em></p></li>
-<li><p>PURPCODE: <em>Abstraction purpose code</em></p></li>
-<li><p>LICHOLDER: <em>Licence holder</em></p></li>
-<li><p>FLPTPANQM3: <em>Point-purpose annual quantity under FL scenario [m^3]</em></p></li>
-<li><p>RAPTPANQM3: <em>Point-purpose annual quantity under RA scenario [m^3]</em></p></li>
-<li><p>GWPROPCONS: <em>Abstraction consumptiveness [-]</em></p></li>
-<li><p>IMPFAC: <em>Factor/flag used in seasonal apportionment of impacts</em></p></li>
 </ul>
 </dd>
 <dt>IntegratedWBs_NBB</dt><dd><ul class="simple">
 <li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
+<li><p>AREA_NAME: <em>EA area name</em></p></li>
+<li><p>CATCHMENT: <em>Catchment (WRGIS boundaries/definitions)</em></p></li>
 <li><p>DSTREAM_WB: <em>ID of next waterbody (downstream)</em></p></li>
-<li><p>Type_IWB: <em>Waterbody type</em></p></li>
+<li><p>Ledger_Are: <em>EA ledger area</em></p></li>
+<li><p>Outflowx: <em>Waterbody outflow point x-coordinate (BNG) [m]</em></p></li>
+<li><p>OutflowY: <em>Waterbody outflow point y-coordinate (BNG) [m]</em></p></li>
 <li><p>RBD_NAME: <em>River basin district name</em></p></li>
+<li><p>Type_IWB: <em>Waterbody type</em></p></li>
+<li><p>UpsArea_m2: <em>Area upstream of waterbody outlet [m^2]</em></p></li>
+<li><p>XCent: <em>Waterbody centroid x-coordinate (BNG) [m]</em></p></li>
+<li><p>Ycent: <em>Waterbody centroid y-coordinate (BNG) [m]</em></p></li>
 </ul>
 </dd>
 <dt>QNaturalFlows_NBB</dt><dd><ul class="simple">
@@ -206,65 +213,91 @@ indicated.</p>
 <li><p>QN{P}ups: <em>Natural flow (ups) at percentile {P} [Ml/d]</em></p></li>
 </ul>
 </dd>
+<dt>REFS_NBB</dt><dd><ul class="simple">
+<li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
+<li><p>REFSQ{P}: <em>Reference flow (typically EFI = environmental flow indicator) at flow
+percentile {P} [Ml/d]</em></p></li>
+</ul>
+</dd>
+<dt>Seasonal_Lookup</dt><dd><ul class="simple">
+<li><p>LOOKUP: <em>Identifier to look up percentile impact factor for SWABS according to
+abstraction start and end months (index column)</em></p></li>
+<li><p>SFAC{P}: <em>SWABS impact factor for percentile {P} [-]</em></p></li>
+</ul>
+</dd>
 <dt>SupResGW_NBB</dt><dd><ul class="simple">
 <li><p>UNID: <em>Unique ID (index column)</em></p></li>
-<li><p>PURPOSE: <em>Impact purpose</em></p></li>
 <li><p>EA_WB_ID: <em>Impacted waterbody ID</em></p></li>
-<li><p>SUP{S}Q{P}: <em>Impact at flow percentile {P} under scenario {S} [Ml/d]</em></p></li>
 <li><p>NAME: <em>Impact name</em></p></li>
 <li><p>OPERATOR: <em>Operator name</em></p></li>
+<li><p>PURPOSE: <em>Impact purpose</em></p></li>
+<li><p>SUP{S}Q{P}: <em>Impact at flow percentile {P} under scenario {S} [Ml/d]</em></p></li>
 <li><p>TYPE_SUPRESGW: <em>Complex impact type</em></p></li>
 </ul>
 </dd>
 <dt>SWABS_NBB</dt><dd><ul class="simple">
 <li><p>UNIQUEID: <em>Unique ID (index column)</em></p></li>
 <li><p>EA_WB_ID: <em>Impacted waterbody ID</em></p></li>
-<li><p>SWQ{P}{S}WR: <em>Total abstraction impact at flow percentile {P} under scenario {S}
-(accounting for local consumptiveness) [Ml/d]</em></p></li>
+<li><p>ENDMON: <em>End month for abstraction profile</em></p></li>
 <li><p>HOFMLD: <em>Hands-off flow (in HOFWBID) at which abstraction impact ceases [Ml/d]</em></p></li>
 <li><p>HOFWBID: <em>ID of waterbody that defines hands-off flow for this abstraction</em></p></li>
-<li><p>LICNUMBER: <em>Licence number</em></p></li>
-<li><p>SITENAME: <em>Site name</em></p></li>
-<li><p>PURPCODE: <em>Abstraction purpose code</em></p></li>
 <li><p>LICHOLDER: <em>Licence holder name</em></p></li>
-<li><p>FLPTPANQM3: <em>Point-purpose annual quantity under FL scenario [m^3]</em></p></li>
-<li><p>RAPTPANQM3: <em>Point-purpose annual quantity under RA scenario [m^3]</em></p></li>
-<li><p>SWPROPCONS: <em>Abstraction consumptiveness [-]</em></p></li>
+<li><p>LICNUMBER: <em>Licence number</em></p></li>
+<li><p>LICN_EXPD: <em>Licence expiry date or flag (D for deregulated)</em></p></li>
+<li><p>PURPCODE: <em>Abstraction purpose code</em></p></li>
 <li><p>RESRVRFLAG: <em>Flag indicating whether abstraction associated with reservoir</em></p></li>
+<li><p>SITENAME: <em>Site name</em></p></li>
+<li><p>STARTMON: <em>Start month for abstraction profile</em></p></li>
+<li><p>SWLTA{S}NR: <em>Long-term average abstraction (no local returns) under scenario {S}
+[Ml/d]</em></p></li>
+<li><p>SWPROPCONS: <em>Abstraction consumptiveness [-]</em></p></li>
+<li><p>SWQ{P}{S}WR: <em>Total abstraction impact at flow percentile {P} under scenario {S}
+(accounting for local consumptiveness) [Ml/d]</em></p></li>
+<li><p>SW_LAKE{i}: <em>Flag indicating whether abstraction associated with lake {i} (refers to
+ledger numbering, with {i} = {1, 2, 3, 4, 5})</em></p></li>
 <li><p>SW_LDMU_NO: <em>Flag indicating whether abstraction associated with level-dependent
 management unit</em></p></li>
-<li><p>SW_LAKE1: <em>Flag indicating whether abstraction associated with lake 1 (refers to
-ledger numbering)</em></p></li>
-<li><p>SW_LAKE2: <em>As SW_LAKE1 but for lake 2</em></p></li>
-<li><p>SW_LAKE3: <em>As SW_LAKE1 but for lake 3</em></p></li>
-<li><p>SW_LAKE4: <em>As SW_LAKE1 but for lake 4</em></p></li>
-<li><p>SW_LAKE5: <em>As SW_LAKE1 but for lake 5</em></p></li>
-<li><p>LICN_EXPD: Licence expiry date or flag (D for deregulated)</p></li>
 </ul>
 </dd>
 </dl>
 </section>
+<section id="optional-table-fields">
+<h2>Optional Table Fields<a class="headerlink" href="#optional-table-fields" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>Fix_Flags</dt><dd><ul class="simple">
+<li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
+<li><p>Fix_Flag: <em>Flag indicating level of “fix” to aim for in optimisation (3 =
+compliant, 0 = no deterioration, -1 = no fix required)</em></p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Fix_Flags table is intended to align with the “fix” target options and flag
+conventions used in the Environmental Destination modelling for the second
+National Framework for Water Resources. This table is not essential for the
+Optimiser, but if available it will be used to guide how flow targets are set.</p>
+</div>
+</section>
 <section id="derived-table-fields">
 <h2>Derived Table Fields<a class="headerlink" href="#derived-table-fields" title="Link to this heading"></a></h2>
 <dl class="simple">
-<dt>EFI</dt><dd><ul class="simple">
-<li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
-<li><p>EFIQ{P}: <em>Environmental flow indicator at flow percentile {P} [Ml/d]</em></p></li>
-</ul>
-</dd>
 <dt>Master</dt><dd><ul class="simple">
+<li><p>EA_WB_ID: <em>Waterbody ID (index column)</em></p></li>
 <li><p>COMP{S}Q{P}: <em>Compliance band (0 = compliant, 1/2/3 = band 1/2/3, -999 = unassessed
 due to type)</em></p></li>
 <li><p>DISCH{S}{agg}: <em>Discharge impacts [Ml/d]</em></p></li>
-<li><p>EFIQ{P}: <em>Environmental flow indicator [Ml/d]</em></p></li>
-<li><p>GW{S}Q{P}{agg}: <em>Groundwater abstraction impacts [Ml/d]</em></p></li>
-<li><p>QN{P}{agg}: <em>Natural flow[Ml/d]</em></p></li>
+<li><p>GW{S}Q{P}{agg}: <em>Groundwater abstraction impacts (accounting for local
+consumptiveness) [Ml/d]</em></p></li>
+<li><p>QN{P}{agg}: <em>Natural flow [Ml/d]</em></p></li>
 <li><p>QT{S}Q{P}: <em>Flow target (which may differ from EFI) [Ml/d]</em></p></li>
+<li><p>REFSQ{P}: <em>Reference flow (typically EFI) [Ml/d]</em></p></li>
 <li><p>SCEN{S}Q{P}{agg}: <em>Scenario flow (i.e. impacted/denaturalised) [Ml/d]</em></p></li>
-<li><p>SD{S}Q{P}: <em>Surplus/deficit relative to EFI [Ml/d]</em></p></li>
+<li><p>SD{S}Q{P}: <em>Surplus/deficit relative to reference flow [Ml/d]</em></p></li>
 <li><p>SDT{S}Q{P}: <em>Surplus/deficit relative to target flow (i.e. QT{S}Q{P}) [Ml/d]</em></p></li>
 <li><p>SUP{S}Q{P}{agg}: <em>Complex impacts [Ml/d]</em></p></li>
-<li><p>SW{S}Q{P}{agg}: <em>Surface water abstraction impacts [Ml/d]</em></p></li>
+<li><p>SW{S}Q{P}{agg}: <em>Surface water abstraction impacts (accounting for local
+consumptiveness) [Ml/d]</em></p></li>
 </ul>
 </dd>
 </dl>

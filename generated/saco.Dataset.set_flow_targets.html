@@ -57,6 +57,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../reference-dataset.html#saco.Dataset"><code class="docutils literal notranslate"><span class="pre">Dataset</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="saco.Dataset.find_outlet_waterbodies.html">saco.Dataset.find_outlet_waterbodies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saco.Dataset.identify_upstream_waterbodies.html">saco.Dataset.identify_upstream_waterbodies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="saco.Dataset.infer_mean_abstraction.html">saco.Dataset.infer_mean_abstraction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="saco.Dataset.load_data.html">saco.Dataset.load_data</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">saco.Dataset.set_flow_targets</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#saco.Dataset.set_flow_targets"><code class="docutils literal notranslate"><span class="pre">Dataset.set_flow_targets()</span></code></a></li>
@@ -100,7 +101,7 @@
 <h1>saco.Dataset.set_flow_targets<a class="headerlink" href="#saco-dataset-set-flow-targets" title="Link to this heading"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="saco.Dataset.set_flow_targets">
-<span class="sig-prename descclassname"><span class="pre">Dataset.</span></span><span class="sig-name descname"><span class="pre">set_flow_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overall_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'compliant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_existing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saco.Dataset.set_flow_targets" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">Dataset.</span></span><span class="sig-name descname"><span class="pre">set_flow_targets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overall_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'compliant'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_fix_flags_table</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite_existing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#saco.Dataset.set_flow_targets" title="Link to this definition"></a></dt>
 <dd><p>Set flow target columns in Master table (in <em>Dataset.mt.data</em> attribute).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -108,6 +109,8 @@
 <li><p><strong>overall_target</strong> – Overall flow target to use for all waterbodies (which can
 be overridden by custom_targets and/or df arguments. See notes below for
 valid arguments.</p></li>
+<li><p><strong>use_fix_flags_table</strong> – Whether to use Fix_Flags table if available in the
+Dataset.</p></li>
 <li><p><strong>custom_targets</strong> – For overriding overall_target for specific waterbodies. See
 discussion/example below for a guide to formulating this dictionary.</p></li>
 <li><p><strong>overwrite_existing</strong> – Whether to overwrite any flow target columns that
@@ -125,7 +128,8 @@ overwrite_existing.</p></li>
 <p class="rubric">Notes</p>
 <p>Valid arguments for overall_target are: ‘compliant’, ‘band-1’, ‘band-2’,
 ‘band-3’, ‘none’ and ‘no-det’. The first four options refer to compliance
-bands (relative to the EFI). In each case, the target is the minimum flow
+bands (relative to the EFI unless a waterbody has a different target, which
+will be indicated by its ASB). In each case, the target is the minimum flow
 needed to achieve the band (i.e. the lower bound/edge of the band). ‘none’
 and ‘band-3’ are aliases (i.e. no flow target / trivial target of zero).</p>
 <p>The final option (‘no-det’) stands for “no deterioration” of compliance
@@ -134,6 +138,13 @@ minimum flow required to meet this condition, i.e. the lower bound of the
 appropriate band. Note that this is not the same as no change between the
 RA and FL scenario flows (which could be implemented by passing an
 appropriate dataframe via the df argument).</p>
+<p>If the <code class="docutils literal notranslate"><span class="pre">use_fix_flags_table</span></code> argument is set to True, the Fix_Flags table
+will be used to define initial targets (if present in the Dataset). The
+Fix_Flags table indicates whether the target for each waterbody is
+compliance (3), no deterioration (0) or none/do-not-fix (-1). The table is
+intended to align with targets used in the National Framework 2
+Environmental Destination work programme. Note that the <code class="docutils literal notranslate"><span class="pre">custom_targets</span></code>
+and <code class="docutils literal notranslate"><span class="pre">df</span></code> arguments will override the Fix_Flags table if provided.</p>
 <p>The custom_targets argument can be used to override the overall_target for
 specific waterbodies. It should be provided as a dictionary of dictionaries,
 as per the following example:

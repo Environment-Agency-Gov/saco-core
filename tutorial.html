@@ -154,20 +154,21 @@ WRGIS (with “swabs” being the “short name” for SWABS_NBB). Similar attri
 the other key WRGIS tables listed below:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">swabs</span></code>: SWABS_NBB (point surface water abstractions)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gwabs</span></code>: GWABs_NBB (point groundwater abstractions)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">dis</span></code>: Discharges_NBB (point surface water discharges)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">sup</span></code>: SupResGW_NBB (point “complex impacts”)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">qnat</span></code>: QNaturalFlows_NBB (waterbody natural flows)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">wbs</span></code>: IntegratedWBs_NBB (waterbody metadata)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">asbs</span></code>: AbsSensBands_NBB (waterbody abstraction sensitivity bands)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">asb_percs</span></code>: ASBPercentages (fractional deviations defining the EFI)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">asb_percs</span></code>: ASBPercentages (fractional deviations defining the reference flows
+- typically environmental flow indicator, EFI)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dis</span></code>: Discharges_NBB (point surface water discharges)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gwabs</span></code>: GWABs_NBB (point groundwater abstractions)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">qnat</span></code>: QNaturalFlows_NBB (waterbody natural flows)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">refs</span></code>: REFS_NBB (reference flows - typically EFI)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sup</span></code>: SupResGW_NBB (point “complex impacts”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">swabs</span></code>: SWABS_NBB (point surface water abstractions)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wbs</span></code>: IntegratedWBs_NBB (waterbody metadata)</p></li>
 </ul>
 </div></blockquote>
-<p>Two additional tables that are not in WRGIS are derived and included in a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>:</p>
+<p>An additional table that is not in WRGIS is derived and included in a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>:</p>
 <blockquote>
 <div><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">efi</span></code>: EFI (waterbody environmental flow indicator)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mt</span></code>: Master (waterbody summary table - water balance terms, compliance, etc)</p></li>
 </ul>
 </div></blockquote>
@@ -207,6 +208,14 @@ merge/join operations etc.</p>
 typical user (in general). See below about (1) using the Calculator to obtain an
 updated Master table and (2) using specific methods to ensure that a Dataset and
 its Master table are ready to go into the Optimiser.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If a user changes a surface or groundwater abstraction impact in a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>
+under a given artificial influences scenario and at a given (natural) flow
+percentile, any long-term average abstraction columns in the relevant table are
+<em>not</em> automatically updated (currently). See <a class="reference internal" href="reference-dataset.html"><span class="doc">Dataset</span></a> for
+explanation of the available options to make this calculation if needed.</p>
 </div>
 </section>
 <section id="other-functionality">
@@ -266,6 +275,12 @@ because capping reduced net impacts upstream to retain physical plausibility. Th
 Master table gives the “target” artificial influences components, which are not
 capped individually.</p>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Any long-term average fields in a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> passed to the <code class="docutils literal notranslate"><span class="pre">Calculator</span></code> are <em>not</em>
+changed by the execution of the <code class="docutils literal notranslate"><span class="pre">Calculator.run</span></code> method currently (i.e. they are
+unchanged in the <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> or Master table returned).</p>
+</div>
 </section>
 <section id="optimiser">
 <h2>Optimiser<a class="headerlink" href="#optimiser" title="Link to this heading"></a></h2>
@@ -303,6 +318,22 @@ included/excluded in optimisation.</p>
 <p>If any further manipulation of the inclusion/exclusion flag is needed it could be
 achieved by working with the relevant dataframes (i.e. <code class="docutils literal notranslate"><span class="pre">ds.swabs.data</span></code>,
 <code class="docutils literal notranslate"><span class="pre">ds.gwabs.data</span></code> and <code class="docutils literal notranslate"><span class="pre">ds.sup.data</span></code>).</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For users interested in Environmental Destination (ED) modelling, it should be noted
+that the default behaviour of the <code class="docutils literal notranslate"><span class="pre">Dataset.set_optimise_flag</span></code> method does not
+mimic exactly the configuration used in ED modelling for the second National
+Framework for Water Resources. It is important for a user to check that they are
+happy with the flag setup.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Waterbody targets can be (optionally) specified via a separate <em>Fix_Flags</em> table
+that sits within a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> (accessible via the short name <code class="docutils literal notranslate"><span class="pre">wbfx</span></code>). If present
+in a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>, the flags in this table will be used to customise flow targets
+(i.e. permitting further relaxation beyond the flow in REFS_NBB). See <a class="reference internal" href="fields.html"><span class="doc">Table Fields</span></a>
+for more details.</p>
 </div>
 </section>
 <section id="optional-arguments">
@@ -345,11 +376,20 @@ the optimisation has been completed (i.e. the impacts that remain after the
 <li><p>Similarly, the Master table summarises the water balance and compliance etc for
 the solution formulated by the <code class="docutils literal notranslate"><span class="pre">Optimiser</span></code>.</p></li>
 <li><p>Additional tables are present: SWABS_Changes and GWABS_Changes (accessible via
-the output dataset’s attributes <code class="docutils literal notranslate"><span class="pre">swabs_chg</span></code> and <code class="docutils literal notranslate"><span class="pre">gwab_chg</span></code>, respectively.
+the output <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>’s attributes <code class="docutils literal notranslate"><span class="pre">swabs_chg</span></code> and <code class="docutils literal notranslate"><span class="pre">gwab_chg</span></code>, respectively.
 These tables contain the impact reductions (Ml/d) required relative to a
 “reference” <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> - see <a class="reference internal" href="reference-optimise.html"><span class="doc">Optimiser</span></a>.</p></li>
 </ul>
 </div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Long-term average abstraction is recalculated after optimisation under the
+assumption that the relative impact profile across the FDC remains constant.
+However, SWABS with hands-off flow (HOF) conditions are omitted from the
+recalculation at present to avoid introducing a conservative bias into the
+estimates. See <a class="reference internal" href="reference-dataset.html"><span class="doc">Dataset</span></a> and <a class="reference internal" href="reference-optimise.html"><span class="doc">Optimiser</span></a> for more
+details.</p>
+</div>
 </section>
 <section id="complex-impacts">
 <h3>Complex Impacts<a class="headerlink" href="#complex-impacts" title="Link to this heading"></a></h3>
@@ -369,14 +409,14 @@ has not already been added to the table.</p>
 <p>If we wish to include specific complex impacts in optimisation, we need to manually
 adjust the flag column for the appropriate rows. This can be achieved in memory using
 dataframe operations, for example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">&#39;complex-impact-id&#39;</span><span class="p">,</span> <span class="s1">&#39;Optimise_Flag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">&#39;complex-impact-id&#39;</span><span class="p">,</span> <span class="s1">&#39;Optimise_Flag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 </pre></div>
 </div>
 <p>If we specify that a reservoir compensation flow increase is allowed in optimisation,
 we also need to indicate that maximum increase permitted. This should be done for the
 relevant scenarios and percentiles under consideration. For example, to permit a maximum
 reservoir compensation flow increase of 5.0 Ml/d, we could do the following:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">&#39;complex-impact-id&#39;</span><span class="p">,</span> <span class="s1">&#39;SUPFLQ95_MAX_INCREASE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">5.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">&#39;complex-impact-id&#39;</span><span class="p">,</span> <span class="s1">&#39;SUPFLQ95_MAX_INCREASE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">5.0</span>
 </pre></div>
 </div>
 <p>Once the flag field and any maximum increase fields have been added to the relevant
