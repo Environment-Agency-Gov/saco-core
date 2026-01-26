@@ -1169,7 +1169,7 @@ def subset_dataset_on_columns(
 def concatenate_datasets(
         datasets: List[Dataset],
         tables_to_skip: Iterable[str] | None = (
-            'IntegratedWBs_NBB', 'ASBPercentages', 'AbsSensBands_NBB'
+            'IntegratedWBs_NBB', 'ASBPercentages', 'AbsSensBands_NBB', 'Fix_Flags',
         ),
 ) -> Dataset:
     """
