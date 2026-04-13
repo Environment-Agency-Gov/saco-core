@@ -1328,6 +1328,10 @@ class Model:
         self.r = arrays['r']  # domain-level unique abstractions (for equality) (1D)
         self.s = arrays['s']  # all abstractions in (each) subdomain (2D)
         self.t = arrays['t']  # subdomain-level unique abstractions (for equality) (2D)
+        self.d_1 = arrays['d_1']  # whether impacted waterbody has flow target of zero (1D)
+        self.d_2 = arrays['d_2']  # indexes of zero-target waterbody arc associated with abstraction (1D)
+        self.d_3 = arrays['d_3']  # unique indexes of zero-target waterbody arcs (1D)
+        self.d_4 = arrays['d_4']  # whether a waterbody arc is zero-target (1D)
 
         # Helper counts
         self.n_swabs = counts['n_swabs']
@@ -1341,6 +1345,8 @@ class Model:
         self.n_sup_dis = counts['n_sup_dis']
 
         # cvxpy "variables"
+        self.u = cp.Variable(self.n_arcs, boolean=True)  # indicator for "uncapped" abstraction component
+        self.v = cp.Variable(self.n_arcs)  # "uncapped" component of abstraction for zero-target waterbodies
         self.w = cp.Variable(self.n_abs + self.n_sup_abs)  # helper for vectorised equality objective
         self.y = cp.Variable(self.n_arcs, boolean=True)  # for hofs
         self.z = cp.Variable(self.n_arcs)  # "final" decision vector (all flows, abstractions)
@@ -1365,7 +1371,7 @@ class Model:
         i = self.n_abs + self.n_flows + self.n_sup_comp
         j = i + self.n_sup_abs
         abs_idx = slices_to_indexes([(0, self.n_abs), (i, j)])
-        self.v = 1.0 / (np.abs(self.m[abs_idx]) + 1e-2)
+        self.f = 1.0 / (np.abs(self.m[abs_idx]) + 1e-2)
 
     def initialise_constraints(self):
         """
@@ -1378,13 +1384,20 @@ class Model:
         for now we simplify by removing the mixed integer (binary) part of the problem
         when solving for the secondary (max-point-equality) objective only.
 
+        Similar reasoning applies for the binary variable u that is used to help obtain
+        the uncapped component of abstraction for waterbodies with no flow targets.
+        Initial testing showed that the formulation can work up to the national scale,
+        but there is a significant increase in runtime.
+
         """
         # Core constraints
         self.constraints = [
             self.z >= 0,  # no negative arc flows
-            self.A_1 @ self.z <= self.b_1,  # flow bounds (flow targets and abstraction limits)
+            self.v >= 0,  # positive convention on uncapped abstraction components
+            self.v[self.d_1 == 0] == 0,  # fix v where not relevant
+            self.A_1 @ (self.z + self.v) <= self.b_1,  # flow bounds (flow targets and abstraction limits)
             self.A_2 @ self.z == self.b_2,  # mass balance
-            self.A_3 @ self.z == self.b_3,  # gwabs proportional splits
+            self.A_3 @ (self.z + self.v) == self.b_3,  # gwabs proportional splits
         ]
 
         if self.objective_type == 'max-abstraction':
@@ -1393,7 +1406,7 @@ class Model:
             # are not necessarily known if changing discharges...) Use y to enforce HOF
             # condition - i.e. if y is zero it limits z to zero in the respective SWABS
             # arc.
-            self.constraints.append(self.z <= cp.multiply(self.m, self.y))
+            self.constraints.append((self.z + self.v) <= cp.multiply(self.m, self.y))
 
             # Further HOF constraints
             if np.sum(self.m[self.p == 1]) > 0.0:
@@ -1402,8 +1415,25 @@ class Model:
                     self.y[self.p == 0] == 1,
 
                     # Ensure HOF is respected if swab is "on" (i.e. y == 1)
+                    # - uncapped abstraction component should not need to be considered
+                    #   separately here, as we use flows z[q] to know whether y is 0/1
+                    # - if hof condition is not met, this will be reflected through
+                    #   constraint above: (z + v) <= (m * y)
+                    # - i.e. if y is zero then both z and v have to be zero
                     self.z[self.q] - cp.multiply(self.y[self.p == 1], self.h) >= 0,
                 ])
+
+            # For obtaining uncapped component of abstraction in waterbodies with no
+            # flow target (= zero)
+            # - looking for u to indicate whether flow arc (in z) is zero, which permits
+            #   uncapped abstraction component (v) to go above zero
+            self.constraints.extend([
+                self.u[self.d_4 == 0] == 0,
+                self.z[self.d_3] <= cp.multiply(self.m[self.d_3], (1 - self.u[self.d_3])),
+                self.v[self.d_1 == 1] <= cp.multiply(
+                    self.m[self.d_1 == 1], self.u[self.d_2][self.d_1 == 1]
+                ),
+            ])
 
         elif self.objective_type in ['max-point-equality', 'min-n-changes']:
             # Technically no need to place the same upper bound limit on arc flows if
@@ -1421,8 +1451,21 @@ class Model:
             if np.sum(self.m[self.p == 1]) > 0.0:
                 if np.sum(self.aux.y == 0) > 0:
                     self.constraints.append(self.z[self.aux.y == 0] == 0)
+                    self.constraints.append(self.v[self.aux.y == 0] == 0)
                     self.h[self.aux.y[self.p == 1] == 0] = 0
                 self.constraints.append(self.z[self.q] - self.h >= 0)
+
+            # For obtaining uncapped component of abstraction in waterbodies with no
+            # flow target (= zero)
+            # - similar to max-abstraction case, except u is now fixed after solving for
+            #   the primary objective (see docstring)
+            # - forces flow (z) to zero if aux.u is one
+            self.constraints.extend([
+                self.z[self.d_3] <= cp.multiply(self.m[self.d_3], (1 - self.aux.u[self.d_3])),
+                self.v[self.d_1 == 1] <= cp.multiply(
+                    self.m[self.d_1 == 1], self.aux.u[self.d_2][self.d_1 == 1]
+                ),
+            ])
 
         else:
             raise ValueError(f'Unknown objective type: {self.objective_type}')
@@ -1436,7 +1479,7 @@ class Model:
             i = self.n_abs + self.n_flows + self.n_sup_comp
             j = i + self.n_sup_abs
             self.constraints.append(
-                (cp.sum(self.z[:self.n_abs]) + cp.sum(self.z[i:j]))
+                (cp.sum(self.z[:self.n_abs] + self.v[:self.n_abs]) + cp.sum(self.z[i:j]))
                 == self.aux.domain_total_abstraction
             )
         if (
@@ -1471,7 +1514,7 @@ class Model:
         """
         if self.objective_type == 'max-abstraction':
             # cost of compensation increase included in vector c
-            self.objective = cp.Minimize(self.c.T @ self.z)
+            self.objective = cp.Minimize(self.c.T @ (self.z + self.v))
 
         elif self.objective_type == 'max-point-equality':
             # Includes complex abstractions, but not compensation flows
@@ -1485,7 +1528,7 @@ class Model:
             self.p_per_node = self.aux.subdomain_proportions_fulfilled[g]
 
             self.inv_m = 1.0 / self.m[abs_idx]
-            self.z_norm = cp.multiply(self.inv_m, self.z[abs_idx])
+            self.z_norm = cp.multiply(self.inv_m, self.z[abs_idx] + self.v[abs_idx])
 
             self.constraints += [self.w >= self.z_norm - self.p_per_node]
             self.constraints += [self.w >= -(self.z_norm - self.p_per_node)]
@@ -1515,7 +1558,10 @@ class Model:
             self.objective = cp.Minimize(
                 cp.sum(
                     cp.multiply(
-                        self.v, cp.abs(self.z[abs_idx] - self.m[abs_idx])
+                        self.f,
+                        cp.abs(
+                            (self.z[abs_idx] + self.v[abs_idx]) - self.m[abs_idx]
+                        )
                     )
                 )
                 + cp.sum(cp.multiply(self.z[i0:i1], 1e9))
