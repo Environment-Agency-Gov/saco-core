@@ -1540,6 +1540,9 @@ class Model:
             self.sum_w_per_sub = self.T @ self.w
             self.mean_w_per_sub = cp.multiply(self.inv_row_counts, self.sum_w_per_sub)
 
+            # Currently increasing compensation flows only enough to meet targets that
+            # would otherwise be missed - i.e. penalise here so compensation is not just
+            # taken to maximum to improve equality metric for abstractions
             i0 = self.n_abs + self.n_flows
             i1 = i0 + self.n_sup_comp
             self.objective = cp.Minimize(
