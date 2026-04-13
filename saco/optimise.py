@@ -648,8 +648,13 @@ class Optimiser:
         gwabs1 = deepcopy(gwabs)
         sup1 = deepcopy(sup)
 
-        swabs1.data[swabs1.impact_column] = model.z.value[:model.n_swabs]
-        gwabs1.data[gwabs1.impact_column] = model.z.value[model.n_swabs:model.n_abs]
+        swabs1.data[swabs1.impact_column] = (
+            model.z.value[:model.n_swabs] + model.v.value[:model.n_swabs]
+        )
+        gwabs1.data[gwabs1.impact_column] = (
+            model.z.value[model.n_swabs:model.n_abs]
+            + model.v.value[model.n_swabs:model.n_abs]
+        )
 
         i = model.n_abs + model.n_flows
         j = i + model.n_sup_comp
