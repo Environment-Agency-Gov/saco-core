@@ -1594,15 +1594,19 @@ class Model:
         j = i + self.n_sup_abs
         abs_idx = slices_to_indexes([(0, self.n_abs), (i, j)])
 
-        self.metrics.domain_total_abstraction = np.sum(self.z.value[abs_idx])
+        self.metrics.domain_total_abstraction = (
+            np.sum(self.z.value[abs_idx]) + np.sum(self.v.value[abs_idx])
+        )
         self.metrics.domain_proportion_fulfilled = (
                 self.metrics.domain_total_abstraction / np.sum(self.m[abs_idx])
         )
         self.metrics.domain_point_mad = np.mean(np.abs(
-            self.z.value[self.r] / self.m[self.r]
+            (self.z.value[self.r] + self.v.value[self.r]) / self.m[self.r]
             - self.metrics.domain_proportion_fulfilled
         ))
-        self.metrics.subdomain_total_abstractions = self.s @ self.z.value
+        self.metrics.subdomain_total_abstractions = (
+            self.s @ (self.z.value + self.v.value)
+        )
         self.metrics.subdomain_proportions_fulfilled = (
             self.metrics.subdomain_total_abstractions / (self.s @ self.m)
         )
@@ -1611,7 +1615,7 @@ class Model:
             - self.metrics.domain_proportion_fulfilled
         ))
 
-        z = self.z.value[abs_idx]
+        z = self.z.value[abs_idx] + self.v.value[abs_idx]
         y = self.m[abs_idx]
         p = self.metrics.subdomain_proportions_fulfilled
         t = self.t[:, abs_idx]
@@ -1622,5 +1626,5 @@ class Model:
         # Number of lpp-level (point) changes (i.e. if a gwab impacts multiple
         # waterbodies only count it as one change)
         self.metrics.domain_n_changes = np.sum(
-            np.abs(self.z.value[self.r] - self.m[self.r]) > 1e-9
+            np.abs((self.z.value[self.r] + self.v.value[self.r]) - self.m[self.r]) > 1e-9
         )
