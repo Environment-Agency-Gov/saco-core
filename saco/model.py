@@ -728,6 +728,10 @@ class ArrayBuilder:
         self.r = None  # domain-level unique abstractions (for equality) (1D)
         self.s = None  # all abstractions in (each) subdomain (2D)
         self.t = None  # subdomain-level unique abstractions (for equality) (2D)
+        self.d_1 = None  # whether impacted waterbody has flow target of zero (1D)
+        self.d_2 = None  # indexes of zero-target waterbody arc associated with abstraction (1D)
+        self.d_3 = None  # unique indexes of zero-target waterbody arcs (1D)
+        self.d_4 = None  # whether a waterbody arc is zero-target (1D)
 
         # Helper counts needed by model (for convenience)
         self.n_swabs = self.swabs.data.shape[0]
@@ -1107,6 +1111,69 @@ class ArrayBuilder:
             self.t[i, indices] = 1
             i += 1
 
+    def construct_zero_target_arrays(self):
+        """
+        Build arrays to support handling of waterbodies with zero-flow targets.
+
+        Four arrays are created by this method:
+
+            - *d_1*: Whether impacted waterbody has flow target of zero (1D). Relevant
+              to abstraction elements (zero elsewhere).
+            - *d_2*: Indexes of zero-target waterbodys arc associated with abstraction
+              arcs (1D). To help connect binary variable indicating whether flow is
+              zero) to solution array for uncapped abstraction component.
+            - *d_3*: Unique indexes of zero-target waterbody arcs (1D).
+            - *d_4*: Whether a waterbody arc is zero-target (1D).
+
+        The latter two arrays d_3 and d_4 help to reduce the number of binary variables
+        that need to be resolved (equal to number of waterbodies with zero-flow targets,
+        rather than the number of abstraction elements impacting waterbodies with
+        zero-flow targets).
+
+        """
+        # Mask indicating whether abstraction element is in a waterbody with a zero flow
+        # target
+        self.d_1 = np.zeros(self.n_arcs, dtype=bool)
+
+        # Indexes of zero-target waterbody element associated with abstraction element
+        self.d_2 = np.zeros(self.n_arcs, dtype=int)
+
+        # SWABS
+        df0 = self.flows.data[[
+            self.flows.qt_column, self.flows.arc_index_column,
+        ]].rename(columns={self.flows.arc_index_column: '__WB_ARC_IDX'})
+        df1 = pd.merge(
+            self.swabs.data, df0, how='left', left_on=self.swabs.waterbody_id_column,
+            right_index=True,
+        )
+        idx1 = df1.loc[df1[self.flows.qt_column] == 0.0, self.swabs.arc_index_column].to_numpy()
+        self.d_1[idx1] = 1
+        self.d_2[idx1] = df1.loc[
+            df1[self.flows.qt_column] == 0.0, '__WB_ARC_IDX'
+        ].to_numpy()
+
+        # GWABS
+        df2 = pd.merge(
+            self.gwabs.data, df0, how='left', left_on=self.gwabs.waterbody_id_column,
+            right_index=True,
+        )
+        idx2 = df2.loc[df2[self.flows.qt_column] == 0.0, self.gwabs.arc_index_column].to_numpy()
+        self.d_1[idx2] = 1
+        self.d_2[idx2] = df2.loc[
+            df2[self.flows.qt_column] == 0.0, '__WB_ARC_IDX'
+        ].to_numpy()
+
+        # There should be at least one abstraction element (at position zero), which
+        # means any zero values in u_2 are just from initialisation (i.e. not
+        # referencing a flow arc) - hence remove zero from unique flow arc index array
+        if self.d_2[self.d_2 > 0].shape[0] > 0:
+            self.d_3 = np.unique(self.d_2[self.d_2 > 0])
+        else:
+            self.d_3 = np.array([], dtype=int)
+
+        self.d_4 = np.zeros(self.d_2.shape[0], dtype=bool)
+        self.d_4[self.d_3] = 1
+
     def run(self) -> Tuple[Dict[str, np.ndarray], Dict[str, int]]:
         """
         Run processing sequence to construct arrays needed for model.
@@ -1130,12 +1197,14 @@ class ArrayBuilder:
         self.find_indexes_of_unique_abstractions()
         self.construct_unique_abstraction_subdomain_array()
         self.construct_abstraction_subdomain_array()
+        self.construct_zero_target_arrays()
 
         self.arrays = {
             'A_1': self.A_1, 'A_2': self.A_2, 'A_3': self.A_3,
             'b_1': self.b_1, 'b_2': self.b_2, 'b_3': self.b_3,
             'c': self.c, 'm': self.m, 'h': self.h, 'p': self.p, 'q': self.q,
-            'r': self.r, 's': self.s, 't': self.t,
+            'r': self.r, 's': self.s, 't': self.t, 'd_1': self.d_1, 'd_2': self.d_2,
+            'd_3': self.d_3, 'd_4': self.d_4,
         }
 
         self.counts = {
