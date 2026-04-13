@@ -306,18 +306,17 @@ class Optimiser:
                 # Run model - max-abstraction objective should work everytime (so no
                 # error handling), but max-point-equality can be more sensitive so we
                 # make a couple of tries
-                model = Model(
-                    objective, special_constraints, auxiliary_info, arrays, counts,
-                    solver=self.solver,
-                )
-
                 if objective == 'max-abstraction':
+                    model = Model(
+                        objective, special_constraints, auxiliary_info, arrays, counts,
+                        solver=self.solver,
+                    )
                     model.set_problem()
                     model.run()
                 else:
                     model = self._run_secondary(
-                        model, auxiliary_info, objective, special_constraints, arrays,
-                        counts, scenario, percentile,
+                        auxiliary_info, objective, special_constraints, arrays, counts,
+                        scenario, percentile,
                     )
 
                 model_key = (scenario, percentile, objective)
@@ -353,28 +352,65 @@ class Optimiser:
         return ds
 
     def _run_secondary(
-            self, model: Model, auxiliary_info: AuxiliaryInfo, objective: str,
+            self, auxiliary_info: AuxiliaryInfo, objective: str,
             special_constraints: List[str], arrays: Dict[str, np.ndarray],
             counts: Dict[str, int], scenario: str, percentile: int,
             error_relaxation_factor: float = 0.999,
     ):
-        """Solve for secondary objective with multiple tries in case of failure."""
+        """
+        Solve for secondary objective with multiple tries in case of failure.
+
+        A "pre-solve" step is used if the Optimiser is being run with a relaxation
+        factor for the primary objective (i.e. if ``self.primary_relaxation_factor`` is
+        not None). This allows for the harder binary variables to be solved for under a
+        relaxed primary objective - i.e. maximum abstraction limited according to the
+        reduction arising from the relaxation factor. This approach should in theory
+        give better solutions when solving for a secondary objective than if the binary
+        variables were fixed at the solution obtained under the unmodified primary
+        objective.
+
+        If the binary variables are solved for explicitly under secondary objectives
+        at some point then the pre-solve step here can be removed.
+
+        More generally, it would be worth looking at improving subdomain-level equality
+        under relaxation at some point.
+
+        """
+        if self.primary_relaxation_factor is None:
+            aux_info = auxiliary_info
+        else:
+            pre_model = Model(
+                objective_type='max-abstraction', special_constraints=['max-abstraction'],
+                auxiliary_info=auxiliary_info, arrays=arrays, counts=counts,
+                solver=self.solver,
+            )
+            pre_model.set_problem()
+            pre_model.run()
+            aux_info = self.get_auxiliary_info(
+                pre_model, primary_relaxation_factor=None,
+            )
+
+        model = Model(
+            objective, special_constraints, aux_info, arrays, counts,
+            solver=self.solver,
+        )
+        model.set_problem()
+
         try:
-            model.set_problem()
             model.run()
         except cp.error.SolverError:
-            auxiliary_info.domain_total_abstraction *= error_relaxation_factor
+            aux_info.domain_total_abstraction *= error_relaxation_factor
             model = Model(
-                objective, special_constraints, auxiliary_info, arrays,
+                objective, special_constraints, aux_info, arrays,
                 counts, solver=self.solver,
             )
             model.set_problem()
             model.run()
 
         if model.z.value is None:
-            auxiliary_info.domain_total_abstraction *= error_relaxation_factor
+            aux_info.domain_total_abstraction *= error_relaxation_factor
             model = Model(
-                objective, special_constraints, auxiliary_info, arrays,
+                objective, special_constraints, aux_info, arrays,
                 counts, solver=self.solver,
             )
             model.set_problem()
@@ -707,6 +743,7 @@ class Optimiser:
             aux.subdomain_proportions_fulfilled = (
                 model.metrics.subdomain_proportions_fulfilled
             )
+            aux.u = model.u.value
             aux.y = model.y.value
             aux.z = model.z.value
 
