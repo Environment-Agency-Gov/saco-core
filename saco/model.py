@@ -1264,6 +1264,7 @@ class AuxiliaryInfo:
     """
     domain_total_abstraction: float = None
     subdomain_proportions_fulfilled: np.ndarray = None
+    u: np.ndarray = None  # binary variable (for "uncapped" abstraction components)
     y: np.ndarray = None  # binary variable (for HOFs)
     z: np.ndarray = None  # "final" solution
 
