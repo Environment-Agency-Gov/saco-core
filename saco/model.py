@@ -723,7 +723,7 @@ class ArrayBuilder:
         self.c = None  # cost (1D)
         self.m = None  # upper bounds of arc flows (1D)
         self.h = None  # flows defining hofs (1D)
-        self.p = None  # indexes of arcs that are swabs with hofs (1D)
+        self.p = None  # indicator for whether an arc is a swab with a hof (1D)
         self.q = None  # indexes of arcs defining hofs (1D)
         self.r = None  # domain-level unique abstractions (for equality) (1D)
         self.s = None  # all abstractions in (each) subdomain (2D)
@@ -942,8 +942,7 @@ class ArrayBuilder:
         Constructs and sets the following attributes:
 
             - *h*: Flows conditions that define a HOF (for SWABS with HOFs).
-            - *p*: Indexes of arcs with HOFs (i.e. indicating arcs that are SWABS with
-              HOFs).
+            - *p*: Indicator for whether an arc is a SWAB with a hof.
             - *q*: Indexes of arcs whose flows determine whether a HOF is being
               respected.
 
@@ -1254,7 +1253,7 @@ class Model:
         self.c = arrays['c']  # cost (1D)
         self.m = arrays['m']  # upper bounds of arc flows (1D)
         self.h = arrays['h']  # flows defining hofs (1D)
-        self.p = arrays['p']  # indexes of arcs that are swabs with hofs (1D)
+        self.p = arrays['p']  # indicator for whether an arc is a swab with a hof (1D)
         self.q = arrays['q']  # indexes of arcs defining hofs (1D)
         self.r = arrays['r']  # domain-level unique abstractions (for equality) (1D)
         self.s = arrays['s']  # all abstractions in (each) subdomain (2D)
