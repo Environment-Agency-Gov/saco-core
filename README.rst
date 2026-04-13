@@ -39,6 +39,9 @@ the terminal to its root directory (containing ``pyproject.toml``, ...) and ente
 
     pip install . --upgrade
 
+Development branches (i.e. anything other than the main and gh-pages branches) should be
+considered unstable and subject to change.
+
 Documentation
 -------------
 
