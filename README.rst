@@ -1,6 +1,10 @@
 SACO
 ====
 
+.. image:: https://github.com/Nexsys-Analytics/saco-core/actions/workflows/python-test.yml/badge.svg
+   :target: https://github.com/Nexsys-Analytics/saco-core/actions/workflows/python-test.yml
+   :alt: Tests
+
 Welcome to the Sustainable Abstraction Calculator and Optimiser (SACO) tool repository.
 
 The SACO tool aims to help identify potential ways to meet environmental flow targets

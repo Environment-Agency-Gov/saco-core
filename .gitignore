@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+*.dylib
+*.egg
+*.lock
+*.egg-info/
+dist/
