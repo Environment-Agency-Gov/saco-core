@@ -71,6 +71,7 @@
 <li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.find_outlet_waterbodies.html">saco.Dataset.find_outlet_waterbodies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.identify_upstream_waterbodies.html">saco.Dataset.identify_upstream_waterbodies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.infer_mean_abstraction.html">saco.Dataset.infer_mean_abstraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.infer_percentile_impact.html">saco.Dataset.infer_percentile_impact</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.load_data.html">saco.Dataset.load_data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.set_flow_targets.html">saco.Dataset.set_flow_targets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/saco.Dataset.set_optimise_flag.html">saco.Dataset.set_optimise_flag</a></li>
@@ -149,19 +150,22 @@ a <em>Dataset</em> as their main input.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.infer_mean_abstraction.html#saco.Dataset.infer_mean_abstraction" title="saco.Dataset.infer_mean_abstraction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">infer_mean_abstraction</span></code></a>([scenario, ...])</p></td>
 <td><p>Infer mean abstraction from impacts under a given scenario and percentile.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.load_data.html#saco.Dataset.load_data" title="saco.Dataset.load_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_data</span></code></a>([skip_tables, set_index, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.infer_percentile_impact.html#saco.Dataset.infer_percentile_impact" title="saco.Dataset.infer_percentile_impact"><code class="xref py py-obj docutils literal notranslate"><span class="pre">infer_percentile_impact</span></code></a>([scenarios, ...])</p></td>
+<td><p>Infer impacts at percentile(s) from a mean abstraction for a scenario(s).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.load_data.html#saco.Dataset.load_data" title="saco.Dataset.load_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_data</span></code></a>([skip_tables, set_index, ...])</p></td>
 <td><p>Load data tables, directed graph (waterbody network) and routing matrix.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.set_flow_targets.html#saco.Dataset.set_flow_targets" title="saco.Dataset.set_flow_targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_flow_targets</span></code></a>([overall_target, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.set_flow_targets.html#saco.Dataset.set_flow_targets" title="saco.Dataset.set_flow_targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_flow_targets</span></code></a>([overall_target, ...])</p></td>
 <td><p>Set flow target columns in Master table (in <em>Dataset.mt.data</em> attribute).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.set_optimise_flag.html#saco.Dataset.set_optimise_flag" title="saco.Dataset.set_optimise_flag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_optimise_flag</span></code></a>([swabs_exclusions, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.set_optimise_flag.html#saco.Dataset.set_optimise_flag" title="saco.Dataset.set_optimise_flag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_optimise_flag</span></code></a>([swabs_exclusions, ...])</p></td>
 <td><p>Set the (at least initial) value of the optimise flag columns in relevant tables.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.set_tables.html#saco.Dataset.set_tables" title="saco.Dataset.set_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_tables</span></code></a>(tables)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.set_tables.html#saco.Dataset.set_tables" title="saco.Dataset.set_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_tables</span></code></a>(tables)</p></td>
 <td><p>Set <em>data</em> attributes of tables.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/saco.Dataset.write_tables.html#saco.Dataset.write_tables" title="saco.Dataset.write_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_tables</span></code></a>(output_folder[, overwrite, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/saco.Dataset.write_tables.html#saco.Dataset.write_tables" title="saco.Dataset.write_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_tables</span></code></a>(output_folder[, overwrite, ...])</p></td>
 <td><p>Write data tables to parquet or (zipped) csv files.</p></td>
 </tr>
 </tbody>

@@ -1,0 +1,6 @@
+﻿saco.Dataset.infer\_percentile\_impact
+======================================
+
+.. currentmodule:: saco
+
+.. automethod:: Dataset.infer_percentile_impact
