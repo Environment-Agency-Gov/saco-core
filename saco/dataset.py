@@ -763,6 +763,82 @@ class Dataset:
                 scenario, percentile, self.sfac, exclude_swabs_with_hofs, exclude_swabs,
             )
 
+    def infer_percentile_impact(
+            self, scenarios: List[str] = None, percentiles: List[int] = None,
+            exclude_swabs_with_hofs: bool = True, exclude_gwabs: List[str] = None,
+            exclude_swabs: List[str] = None,
+    ):
+        """
+        Infer impacts at percentile(s) from a mean abstraction for a scenario(s).
+
+        Args:
+            scenarios: Abbreviation of artificial influences scenarios for which
+                calculations should be performed. Defaults to all in Dataset.
+            percentiles: Flow percentiled (natural) for which calculations should be
+                performed. Defaults to all in Dataset.
+            exclude_swabs_with_hofs: Whether to exclude SWABS with HOFs from impact
+                calculations.
+            exclude_gwabs: Groundwater abstractions to exclude from updated impact
+                calculations. List should contain entries from UNIQUEID in GWABs_NBB.
+            exclude_swabs: Surface water abstractions to exclude from updated impact
+                calculations. List should contain entries from UNIQUEID in SWABS_NBB.
+
+        Notes:
+
+            WRGIS models the relationships between long-term average abstraction and
+            impacts at different flow percentiles. For GWABS, the calculations are
+            based on the "IMPFAC" field in GWABs_NBB. For SWABS, the calculations draw
+            on the start/end months in SWABS_NBB, which are used to identify relevant
+            factors in the Seasonal_Lookup table.
+
+            This method performs these calculations for GWABS and SWABS. Complex
+            abstractions/impacts in the SupResGW_NBB table are not handled. The impacts
+            for each scenario/percentile combination calculated by this method account
+            for local consumptiveness. In contrast, the long-term average abstractions
+            that form an "input" to the calculations should *exclude* the effects of
+            local consumptiveness. See the notes for the ``infer_mean_abstraction``
+            method for further details.
+
+            Lists of abstractions to be excluded from long-term average calculations can
+            be supplied via the ``exclude_gwabs`` and ``exclude_swabs`` arguments.
+            Abstractions to be excluded should be specified using their UNIQUEID.
+
+            It is assumed that the relevant *long-term average* columns are already
+            present in the relevant tables before this method is called.
+
+            It is also assumed that the relevant *scenario/percentile impact* columns are
+            already present before this method is called. The role of the method is to
+            update these impacts for any abstractions that are not listed in
+            ``exclude_gwabs`` or ``exclude_swabs`` arguments.
+
+            Finally, we note that the impacts calculated by this method are
+            "unconstrained". They are not limited by the actual available flow in a
+            waterbody, which might mean that the impacts are not fully realisable. In
+            addition, the impacts calculated by this method are not guaranteed to
+            respect any HOF conditions. See ``Calculator.__init__`` for further guidance
+            on this point.
+
+        """
+        if scenarios is None:
+            scenarios = self.scenarios
+        if percentiles is None:
+            percentiles = self.percentiles
+        if exclude_gwabs is None:
+            exclude_gwabs = []
+        if exclude_swabs is None:
+            exclude_swabs = []
+
+        if self.gwabs.data.shape[0] > 0:
+            for scenario, percentile in itertools.product(scenarios, percentiles):
+                self.gwabs.infer_percentile_impact(scenario, percentile, exclude_gwabs)
+
+        if self.swabs.data.shape[0] > 0:
+            for scenario, percentile in itertools.product(scenarios, percentiles):
+                self.swabs.infer_percentile_impact(
+                    scenario, percentile, self.sfac, exclude_swabs,
+                    exclude_swabs_with_hofs,
+                )
+
     def _calculate_flow_targets(
             self, overall_target: str, use_fix_flags_table: bool = True,
             custom_targets: Dict = None,
