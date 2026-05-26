@@ -1301,12 +1301,15 @@ class Model:
         arrays: Output from ArrayBuilder.run.
         counts: Output from ArrayBuilder.run.
         solver: Name used by cvxpy to indicate the solver that it should use.
+        uncapped_zero_targets: Whether impacts may have an "infeasible" component after
+            optimisation if an impacted waterbody has a flow target of zero. See
+            Optimiser.__init__ docstring.
 
     """
     def __init__(
             self, objective_type: str, special_constraints: List[str],
             auxiliary_info: AuxiliaryInfo, arrays: Dict, counts: Dict,
-            solver: str = cp.SCIPY,
+            solver: str = cp.SCIPY, uncapped_zero_targets: bool =  True,
     ):
         self.objective_type = objective_type
         self.special_constraints = special_constraints
@@ -1332,6 +1335,14 @@ class Model:
         self.d_2 = arrays['d_2']  # indexes of zero-target waterbody arc associated with abstraction (1D)
         self.d_3 = arrays['d_3']  # unique indexes of zero-target waterbody arcs (1D)
         self.d_4 = arrays['d_4']  # whether a waterbody arc is zero-target (1D)
+
+        # Manipulation of arrays forces remaining impacts to be capped to feasible /
+        # realisable impacts if required
+        if not uncapped_zero_targets:
+            self.d_1.fill(0)
+            self.d_2.fill(0)
+            self.d_3 = np.array([])
+            self.d_4.fill(0)
 
         # Helper counts
         self.n_swabs = counts['n_swabs']
@@ -1427,13 +1438,21 @@ class Model:
             # flow target (= zero)
             # - looking for u to indicate whether flow arc (in z) is zero, which permits
             #   uncapped abstraction component (v) to go above zero
-            self.constraints.extend([
-                self.u[self.d_4 == 0] == 0,
-                self.z[self.d_3] <= cp.multiply(self.m[self.d_3], (1 - self.u[self.d_3])),
-                self.v[self.d_1 == 1] <= cp.multiply(
-                    self.m[self.d_1 == 1], self.u[self.d_2][self.d_1 == 1]
-                ),
-            ])
+            if np.sum(self.d_1[:self.n_abs]) > 0:
+                self.constraints.extend([
+                    self.u[self.d_4 == 0] == 0,
+                    self.z[self.d_3] <= cp.multiply(
+                        self.m[self.d_3], (1 - self.u[self.d_3])
+                    ),
+                    self.v[self.d_1 == 1] <= cp.multiply(
+                        self.m[self.d_1 == 1], self.u[self.d_2][self.d_1 == 1]
+                    ),
+                ])
+            else:
+                self.constraints.extend([
+                    self.u == 0,
+                    self.v == 0,
+                ])
 
         elif self.objective_type in ['max-point-equality', 'min-n-changes']:
             # Technically no need to place the same upper bound limit on arc flows if
@@ -1460,12 +1479,17 @@ class Model:
             # - similar to max-abstraction case, except u is now fixed after solving for
             #   the primary objective (see docstring)
             # - forces flow (z) to zero if aux.u is one
-            self.constraints.extend([
-                self.z[self.d_3] <= cp.multiply(self.m[self.d_3], (1 - self.aux.u[self.d_3])),
-                self.v[self.d_1 == 1] <= cp.multiply(
-                    self.m[self.d_1 == 1], self.aux.u[self.d_2][self.d_1 == 1]
-                ),
-            ])
+            if np.sum(self.d_1[:self.n_abs]) > 0:
+                self.constraints.extend([
+                    self.z[self.d_3] <= cp.multiply(
+                        self.m[self.d_3], (1 - self.aux.u[self.d_3])
+                    ),
+                    self.v[self.d_1 == 1] <= cp.multiply(
+                        self.m[self.d_1 == 1], self.aux.u[self.d_2][self.d_1 == 1]
+                    ),
+                ])
+            else:
+                self.constraints.append(self.v == 0)
 
         else:
             raise ValueError(f'Unknown objective type: {self.objective_type}')

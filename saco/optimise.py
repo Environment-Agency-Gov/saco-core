@@ -107,6 +107,8 @@ class Optimiser:
             average abstraction (after optimisation complete).
         infeasible_targets_method: Approach to use to infeasible flow targets: either
             'drop' entirely or 'relax' to maximum feasible flow.
+        uncapped_zero_targets: Whether impacts may have an "infeasible" component after
+            optimisation if an impacted waterbody has a flow target of zero.
         constants: Global constants defined by default in config.Constants.
 
     Notes:
@@ -138,6 +140,21 @@ class Optimiser:
         recalculation at present to avoid introducing a conservative bias into the
         estimates. See :doc:`reference-dataset` for more details.
 
+        The ``uncapped_zero_targets`` argument controls whether SWABS and GWABS are
+        allowed to have an "infeasible" component to their impacts after optimisation,
+        in the case that an impacted waterbody has a flow target of zero. Flow targets
+        of zero may arise under do-not-fix or no-deterioration of Band 3 flags, as well
+        as where targets are dropped due to impacts held constant (see above). An
+        abstraction has an infeasible component if its full stated impact can only be
+        partially realised (given that "negative flows" are impossible).
+
+        Under the default for the ``uncapped_zero_targets`` argument (``True``), the
+        Optimiser *may* identify lower required reductions than if the argument were
+        set to ``False``, as ``False`` indicates that all remaining impacts after
+        optimisation should be physically realisable. However, the magnitude of any
+        difference depends on the details of the targets and artificial influences in a
+        given domain.
+
     Examples:
         >>> from saco import Dataset, Optimiser
         >>>
@@ -163,6 +180,7 @@ class Optimiser:
             reference_dataset: Dataset = None,
             lta_base_percentile: int = 95,
             infeasible_targets_method: str = 'drop',
+            uncapped_zero_targets: bool = True,
             constants: Constants = None,
     ):
         if constants is None:
@@ -213,6 +231,8 @@ class Optimiser:
                 f'Unknown infeasible_targets_method: {infeasible_targets_method}'
             )
         self.infeasible_targets_method = infeasible_targets_method
+
+        self.uncapped_zero_targets = uncapped_zero_targets
 
         self.formatted_data = {}
         self.arrays = {}
@@ -310,6 +330,7 @@ class Optimiser:
                     model = Model(
                         objective, special_constraints, auxiliary_info, arrays, counts,
                         solver=self.solver,
+                        uncapped_zero_targets=self.uncapped_zero_targets,
                     )
                     model.set_problem()
                     model.run()
@@ -382,7 +403,7 @@ class Optimiser:
             pre_model = Model(
                 objective_type='max-abstraction', special_constraints=['max-abstraction'],
                 auxiliary_info=auxiliary_info, arrays=arrays, counts=counts,
-                solver=self.solver,
+                solver=self.solver, uncapped_zero_targets=self.uncapped_zero_targets,
             )
             pre_model.set_problem()
             pre_model.run()
@@ -392,7 +413,7 @@ class Optimiser:
 
         model = Model(
             objective, special_constraints, aux_info, arrays, counts,
-            solver=self.solver,
+            solver=self.solver, uncapped_zero_targets=self.uncapped_zero_targets,
         )
         model.set_problem()
 
@@ -403,6 +424,7 @@ class Optimiser:
             model = Model(
                 objective, special_constraints, aux_info, arrays,
                 counts, solver=self.solver,
+                uncapped_zero_targets=self.uncapped_zero_targets,
             )
             model.set_problem()
             model.run()
@@ -412,6 +434,7 @@ class Optimiser:
             model = Model(
                 objective, special_constraints, aux_info, arrays,
                 counts, solver=self.solver,
+                uncapped_zero_targets=self.uncapped_zero_targets,
             )
             model.set_problem()
             model.run()
