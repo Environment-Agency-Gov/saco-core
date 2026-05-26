@@ -539,7 +539,15 @@ class Dataset:
 
         qt_cols = self.mt.get_value_columns(self.constants.qt_abb)
         if not overwrite_existing:
+            existing_cols = [col for col in qt_cols if col in self.mt.data.columns]
             new_cols = [col for col in qt_cols if col not in self.mt.data.columns]
+            if len(existing_cols) > 0:
+                warnings.warn(
+                    f'Existing flow target columns are present but the overwrite_existing '
+                    f'argument is False. Set overwrite_existing to True if these '
+                    f'columns should be replaced (otherwise they will be left alone). '
+                    f'The existing columns already present are: {existing_cols}.'
+                )
             df0 = df0[new_cols]
 
         cols_to_drop = [col for col in df0.columns if col in self.mt.data.columns]
