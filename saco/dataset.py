@@ -847,6 +847,58 @@ class Dataset:
                     exclude_swabs_with_hofs,
                 )
 
+    def set_reference_flows(self):
+        """
+        Calculate reference flows based on (relative) deviation from natural flows.
+
+        Deviations are calculated using abstraction sensitivity bands (ASBs). The
+        fractional deviations associated with each flow percentile for each ASB are
+        given in the ASBPercentages table. ASBs per waterbody are given in
+        AbsSensBands_NBB. This is how the reference flow is calculated in WRGIS.
+
+        A call to this method sets (or resets) the ``self.refs.data`` attribute
+        (dataframe). Any existing columns in this dataframe will be replaced. The
+        method may be useful if changes have been made to natural flows or ASBs for
+        one or more waterbodies. Otherwise, calling this method is not required in a
+        typical use case, as pre-calculated reference flows are distributed as part of
+        SACO datasets.
+
+        """
+        asb_col = self.asbs.asb_column
+        perc_col = self.asb_percs.percent_column
+
+        qnat_cols = [
+            self.qnat.get_value_column(p, self.constants.ups_abb) for p in self.percentiles
+        ]
+        df = pd.concat([self.qnat.data[qnat_cols], self.asbs.data], axis=1)
+
+        dfs = []
+        ref_cols = []
+        for p in self.percentiles:
+            p_label = self.asb_percs.percentile_label(p)
+            percs = self.asb_percs.data.loc[
+                self.asb_percs.data.index.get_level_values(0) == p_label
+            ].reset_index()
+            percs = percs.drop(columns=self.asb_percs.index_name[0])
+            percs = percs.rename(columns={self.asb_percs.index_name[1]: asb_col})
+
+            qnat_col = self.qnat.get_value_column(p, self.constants.ups_abb)
+            ref_col = self.refs.get_value_column(p)
+
+            df1 = df[[qnat_col, asb_col]].reset_index().merge(percs, how='left', on=asb_col)
+            df1 = df1.set_index(self.constants.waterbody_id_column)
+            df1.loc[df1[perc_col].isna(), perc_col] = 1.0
+
+            df1[ref_col] = df1[qnat_col] - (df1[qnat_col] * df1[perc_col])
+
+            dfs.append(df1[[ref_col]])
+            ref_cols.append(ref_col)
+
+        df2 = pd.concat(dfs, axis=1)
+        df2 = df2[ref_cols]
+
+        self.refs.data = df2
+
     def _calculate_flow_targets(
             self, overall_target: str, use_fix_flags_table: bool = True,
             custom_targets: Dict = None,

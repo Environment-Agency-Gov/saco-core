@@ -24,6 +24,7 @@ a *Dataset* as their main input.
       ~Dataset.load_data
       ~Dataset.set_flow_targets
       ~Dataset.set_optimise_flag
+      ~Dataset.set_reference_flows
       ~Dataset.set_tables
       ~Dataset.write_tables
 
