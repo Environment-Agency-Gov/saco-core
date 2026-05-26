@@ -4,9 +4,9 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "saco"
-version = "0.1.1.dev"
+version = "0.2.0"
 readme = "README.rst"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "numpy",
     "scipy>=1.16.0",

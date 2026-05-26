@@ -20,24 +20,23 @@ Installation
 
 After cloning the repository (or downloading/unzipping a specific release), create a
 new Python environment (e.g. a virtual environment or conda environment). The version
-of Python should be at least 3.13. Then in a terminal navigate to the root of the
+of Python should be at least 3.11. Then in a terminal navigate to the root of the
 repository. To install the package, core dependencies and JupyterLab (e.g. for running
-the example notebook) at the same time (recommended for most users), use the command::
+the example notebook), use the command::
 
     pip install .[jupyter]
 
 Note that:
 
     - The ``[jupyter]`` part may be dropped if JupyterLab is not required (i.e. for a
-      minimal installation, just use the command ``pip install .``).
+      minimal installation use ``pip install .``).
     - The environment.yml file in the repository root can be optionally used to create
-      a conda environment with the same dependency versions used in initial development
-      and testing.
+      a conda environment with the same Python (3.13) and dependency versions used in
+      initial development and testing.
     - A ``-e`` flag can be used to install the package in editable/developer mode if
       needed.
     - Some users may wish to install via ``pip install -e .[jupyter,dev]`` to obtain
-      additional packages used for testing and building documentation (which may not be
-      relevant to all users).
+      additional packages used for testing and building documentation.
 
 To upgrade to a new release, one approach is to download/unzip the release, navigate in
 the terminal to its root directory (containing ``pyproject.toml``, ...) and enter::

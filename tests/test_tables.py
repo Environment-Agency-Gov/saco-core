@@ -72,7 +72,8 @@ def test_swabs_infer_mean_abstraction():
     df, dc = get_swabs_data()
     ds = get_dataset()
 
-    ds.sfac.data.loc[ds.sfac.data.index == '1&12', f'SFAC{dc['percentile']}'] = (
+    percentile = dc['percentile']
+    ds.sfac.data.loc[ds.sfac.data.index == '1&12', f'SFAC{percentile}'] = (
         dc['sfac']
     )
 
@@ -88,7 +89,8 @@ def test_swabs_infer_percentile_impact():
     df, dc = get_swabs_data()
     ds = get_dataset()
 
-    ds.sfac.data.loc[ds.sfac.data.index == '1&12', f'SFAC{dc['percentile']}'] = (
+    percentile = dc['percentile']
+    ds.sfac.data.loc[ds.sfac.data.index == '1&12', f'SFAC{percentile}'] = (
         dc['sfac']
     )
 
