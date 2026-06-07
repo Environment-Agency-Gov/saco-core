@@ -624,11 +624,11 @@ class Seasonal_Lookup(DataTable):
 class SWABS_NBB(DataTable):
     """
     Table for surface water abstraction impacts at the licence-point-purpose level.
-
+    
     """
     def set_schema(
             self, unique_index: bool = True, check_positive: bool = False,
-            nullable_waterbody_column: bool = False, auxiliary_mode: bool = False,
+            nullable_waterbody_column: bool = True, auxiliary_mode: bool = False,
     ):
         auxiliary_columns = self._auxiliary_columns_helper(nullable_waterbody_column)
         auxiliary_columns[self.hof_value_column] = {'type': float, 'nullable': False}
@@ -871,7 +871,7 @@ class Discharges_NBB(DataTable):
     """
     def set_schema(
             self, unique_index: bool = True, check_positive: bool = True,
-            nullable_waterbody_column: bool = False, auxiliary_mode: bool = False,
+            nullable_waterbody_column: bool = True, auxiliary_mode: bool = False,
     ):
         auxiliary_columns = self._auxiliary_columns_helper(nullable_waterbody_column)
 
