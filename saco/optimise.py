@@ -107,6 +107,8 @@ class Optimiser:
             average abstraction (after optimisation complete).
         infeasible_targets_method: Approach to use to infeasible flow targets: either
             'drop' entirely or 'relax' to maximum feasible flow.
+        uncapped_zero_targets: Whether impacts may have an "infeasible" component after
+            optimisation if an impacted waterbody has a flow target of zero.
         constants: Global constants defined by default in config.Constants.
 
     Notes:
@@ -138,6 +140,21 @@ class Optimiser:
         recalculation at present to avoid introducing a conservative bias into the
         estimates. See :doc:`reference-dataset` for more details.
 
+        The ``uncapped_zero_targets`` argument controls whether SWABS and GWABS are
+        allowed to have an "infeasible" component to their impacts after optimisation,
+        in the case that an impacted waterbody has a flow target of zero. Flow targets
+        of zero may arise under do-not-fix or no-deterioration of Band 3 flags, as well
+        as where targets are dropped due to impacts held constant (see above). An
+        abstraction has an infeasible component if its full stated impact can only be
+        partially realised (given that "negative flows" are impossible).
+
+        Under the default for the ``uncapped_zero_targets`` argument (``True``), the
+        Optimiser *may* identify lower required reductions than if the argument were
+        set to ``False``, as ``False`` indicates that all remaining impacts after
+        optimisation should be physically realisable. However, the magnitude of any
+        difference depends on the details of the targets and artificial influences in a
+        given domain.
+
     Examples:
         >>> from saco import Dataset, Optimiser
         >>>
@@ -163,6 +180,7 @@ class Optimiser:
             reference_dataset: Dataset = None,
             lta_base_percentile: int = 95,
             infeasible_targets_method: str = 'drop',
+            uncapped_zero_targets: bool = True,
             constants: Constants = None,
     ):
         if constants is None:
@@ -213,6 +231,8 @@ class Optimiser:
                 f'Unknown infeasible_targets_method: {infeasible_targets_method}'
             )
         self.infeasible_targets_method = infeasible_targets_method
+
+        self.uncapped_zero_targets = uncapped_zero_targets
 
         self.formatted_data = {}
         self.arrays = {}
@@ -306,18 +326,18 @@ class Optimiser:
                 # Run model - max-abstraction objective should work everytime (so no
                 # error handling), but max-point-equality can be more sensitive so we
                 # make a couple of tries
-                model = Model(
-                    objective, special_constraints, auxiliary_info, arrays, counts,
-                    solver=self.solver,
-                )
-
                 if objective == 'max-abstraction':
+                    model = Model(
+                        objective, special_constraints, auxiliary_info, arrays, counts,
+                        solver=self.solver,
+                        uncapped_zero_targets=self.uncapped_zero_targets,
+                    )
                     model.set_problem()
                     model.run()
                 else:
                     model = self._run_secondary(
-                        model, auxiliary_info, objective, special_constraints, arrays,
-                        counts, scenario, percentile,
+                        auxiliary_info, objective, special_constraints, arrays, counts,
+                        scenario, percentile,
                     )
 
                 model_key = (scenario, percentile, objective)
@@ -353,29 +373,68 @@ class Optimiser:
         return ds
 
     def _run_secondary(
-            self, model: Model, auxiliary_info: AuxiliaryInfo, objective: str,
+            self, auxiliary_info: AuxiliaryInfo, objective: str,
             special_constraints: List[str], arrays: Dict[str, np.ndarray],
             counts: Dict[str, int], scenario: str, percentile: int,
             error_relaxation_factor: float = 0.999,
     ):
-        """Solve for secondary objective with multiple tries in case of failure."""
+        """
+        Solve for secondary objective with multiple tries in case of failure.
+
+        A "pre-solve" step is used if the Optimiser is being run with a relaxation
+        factor for the primary objective (i.e. if ``self.primary_relaxation_factor`` is
+        not None). This allows for the harder binary variables to be solved for under a
+        relaxed primary objective - i.e. maximum abstraction limited according to the
+        reduction arising from the relaxation factor. This approach should in theory
+        give better solutions when solving for a secondary objective than if the binary
+        variables were fixed at the solution obtained under the unmodified primary
+        objective.
+
+        If the binary variables are solved for explicitly under secondary objectives
+        at some point then the pre-solve step here can be removed.
+
+        More generally, it would be worth looking at improving subdomain-level equality
+        under relaxation at some point.
+
+        """
+        if self.primary_relaxation_factor is None:
+            aux_info = auxiliary_info
+        else:
+            pre_model = Model(
+                objective_type='max-abstraction', special_constraints=['max-abstraction'],
+                auxiliary_info=auxiliary_info, arrays=arrays, counts=counts,
+                solver=self.solver, uncapped_zero_targets=self.uncapped_zero_targets,
+            )
+            pre_model.set_problem()
+            pre_model.run()
+            aux_info = self.get_auxiliary_info(
+                pre_model, primary_relaxation_factor=None,
+            )
+
+        model = Model(
+            objective, special_constraints, aux_info, arrays, counts,
+            solver=self.solver, uncapped_zero_targets=self.uncapped_zero_targets,
+        )
+        model.set_problem()
+
         try:
-            model.set_problem()
             model.run()
         except cp.error.SolverError:
-            auxiliary_info.domain_total_abstraction *= error_relaxation_factor
+            aux_info.domain_total_abstraction *= error_relaxation_factor
             model = Model(
-                objective, special_constraints, auxiliary_info, arrays,
+                objective, special_constraints, aux_info, arrays,
                 counts, solver=self.solver,
+                uncapped_zero_targets=self.uncapped_zero_targets,
             )
             model.set_problem()
             model.run()
 
         if model.z.value is None:
-            auxiliary_info.domain_total_abstraction *= error_relaxation_factor
+            aux_info.domain_total_abstraction *= error_relaxation_factor
             model = Model(
-                objective, special_constraints, auxiliary_info, arrays,
+                objective, special_constraints, aux_info, arrays,
                 counts, solver=self.solver,
+                uncapped_zero_targets=self.uncapped_zero_targets,
             )
             model.set_problem()
             model.run()
@@ -612,8 +671,13 @@ class Optimiser:
         gwabs1 = deepcopy(gwabs)
         sup1 = deepcopy(sup)
 
-        swabs1.data[swabs1.impact_column] = model.z.value[:model.n_swabs]
-        gwabs1.data[gwabs1.impact_column] = model.z.value[model.n_swabs:model.n_abs]
+        swabs1.data[swabs1.impact_column] = (
+            model.z.value[:model.n_swabs] + model.v.value[:model.n_swabs]
+        )
+        gwabs1.data[gwabs1.impact_column] = (
+            model.z.value[model.n_swabs:model.n_abs]
+            + model.v.value[model.n_swabs:model.n_abs]
+        )
 
         i = model.n_abs + model.n_flows
         j = i + model.n_sup_comp
@@ -707,6 +771,7 @@ class Optimiser:
             aux.subdomain_proportions_fulfilled = (
                 model.metrics.subdomain_proportions_fulfilled
             )
+            aux.u = model.u.value
             aux.y = model.y.value
             aux.z = model.z.value
 

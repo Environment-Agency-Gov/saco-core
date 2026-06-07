@@ -20,9 +20,11 @@ a *Dataset* as their main input.
       ~Dataset.find_outlet_waterbodies
       ~Dataset.identify_upstream_waterbodies
       ~Dataset.infer_mean_abstraction
+      ~Dataset.infer_percentile_impact
       ~Dataset.load_data
       ~Dataset.set_flow_targets
       ~Dataset.set_optimise_flag
+      ~Dataset.set_reference_flows
       ~Dataset.set_tables
       ~Dataset.write_tables
 

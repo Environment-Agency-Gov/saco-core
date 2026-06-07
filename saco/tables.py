@@ -499,6 +499,40 @@ class GWABs_NBB(DataTable):
 
         self.data = self.data.drop(columns=tmp_col)
 
+    def infer_percentile_impact(
+            self, scenario: str, percentile: int, exclude_ids: List[str] = None,
+    ):
+        """
+        Infer impacts at a percentile from a long-term average under a given scenario.
+
+        Updates impacts column in *data* (dataframe) attribute. Assumes that the
+        relevant (scenario/percentile) impacts column is already present (i.e. so that
+        all rows not listed in ``exclude_ids`` can be updated). See detailed notes in
+        ``Dataset.infer_percentile_impact`` method.
+
+        Args:
+            scenario: Abbreviation of artificial influences scenario.
+            percentile: Flow percentile (natural) at which impact should be inferred
+                from long-term average abstraction.
+            exclude_ids: Abstractions whose percentile impacts should not be inferred.
+                List should contain entries from UNIQUEID in GWABs_NBB.
+
+        """
+        if exclude_ids is None:
+            exclude_ids = []
+
+        gwabs_impact_col = self.get_value_column(scenario, percentile)
+        lta_col = self.get_lta_column(scenario)
+
+        self.data[gwabs_impact_col] = np.where(
+            self.data.index.isin(exclude_ids),
+            self.data[gwabs_impact_col],
+
+            self.data[lta_col]
+            * self.data[self.consumptiveness_column]
+            * (1 + (1 - self.data[self.impfac_column]) * (0.5 - (percentile / 100)) / 0.5)
+        )
+
     @property
     def name(self) -> str:
         return 'GWABs_NBB'
@@ -773,6 +807,67 @@ class SWABS_NBB(DataTable):
             self.data[tmp_col]
         )
         self.data = self.data.drop(columns=[tmp_col, sfac_lookup_col, sfac_col])
+
+    def infer_percentile_impact(
+            self, scenario: str, percentile: int, sfac: Seasonal_Lookup,
+            exclude_ids: List[str] = None, exclude_swabs_with_hofs: bool = True,
+    ):
+        """
+        Infer impacts at percentile from a long-term average under a given scenario.
+
+        Updates impacts column in *data* (dataframe) attribute. Assumes that the
+        relevant (scenario/percentile) impacts column is already present (i.e. so that
+        all rows not listed in ``exclude_ids`` can be updated). See detailed notes in
+        ``Dataset.infer_percentile_impact`` method.
+
+        Args:
+            scenario: Abbreviation of artificial influences scenario.
+            percentile: Flow percentile (natural) at which impact should be inferred
+                from long-term average abstraction.
+            sfac: Instance of *Seasonal_Lookup* table to facilitate inference of
+                long-term average from a given percentile.
+            exclude_ids: Abstractions whose percentile impacts should not be inferred.
+                List should contain entries from UNIQUEID in SWABS_NBB.
+            exclude_swabs_with_hofs: Whether to exclude SWABS with HOFs from percentile
+                impact calculations.
+
+        """
+        if exclude_ids is None:
+            exclude_ids = []
+
+        percentile_col = self.get_value_column(scenario, percentile)
+        lta_col = self.get_lta_column(scenario)
+
+        sfac_lookup_col = sfac.data.index.name
+        sfac_col = sfac.get_value_column(percentile)
+
+        self.data[sfac_lookup_col] = (
+            self.data[self.start_month_column].astype(str)
+            + '&' + self.data[self.end_month_column].astype(str)
+        )
+        self.data = pd.merge(
+            self.data, sfac.data[[sfac_col]], how='left', left_on=sfac_lookup_col,
+            right_index=True,
+        )
+
+        if exclude_swabs_with_hofs:
+            hof_ids = self.data.loc[
+                self.data[self.hof_value_column] > 0.0
+            ].index.tolist()
+            _exclude_ids = list(set(exclude_ids + hof_ids))
+        else:
+            _exclude_ids = exclude_ids
+
+        self.data[percentile_col] = np.where(
+            self.data.index.isin(_exclude_ids),
+            self.data[percentile_col],
+
+            self.data[lta_col]
+            * self.data[sfac_col]
+            * self.data[self.consumptiveness_column]
+        )
+
+        self.data = self.data.drop(columns=[sfac_lookup_col, sfac_col])
 
     @property
     def name(self) -> str:

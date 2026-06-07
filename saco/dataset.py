@@ -539,7 +539,15 @@ class Dataset:
 
         qt_cols = self.mt.get_value_columns(self.constants.qt_abb)
         if not overwrite_existing:
+            existing_cols = [col for col in qt_cols if col in self.mt.data.columns]
             new_cols = [col for col in qt_cols if col not in self.mt.data.columns]
+            if len(existing_cols) > 0:
+                warnings.warn(
+                    f'Existing flow target columns are present but the overwrite_existing '
+                    f'argument is False. Set overwrite_existing to True if these '
+                    f'columns should be replaced (otherwise they will be left alone). '
+                    f'The existing columns already present are: {existing_cols}.'
+                )
             df0 = df0[new_cols]
 
         cols_to_drop = [col for col in df0.columns if col in self.mt.data.columns]
@@ -762,6 +770,134 @@ class Dataset:
             self.swabs.infer_mean_abstraction(
                 scenario, percentile, self.sfac, exclude_swabs_with_hofs, exclude_swabs,
             )
+
+    def infer_percentile_impact(
+            self, scenarios: List[str] = None, percentiles: List[int] = None,
+            exclude_swabs_with_hofs: bool = True, exclude_gwabs: List[str] = None,
+            exclude_swabs: List[str] = None,
+    ):
+        """
+        Infer impacts at percentile(s) from a mean abstraction for a scenario(s).
+
+        Args:
+            scenarios: Abbreviation of artificial influences scenarios for which
+                calculations should be performed. Defaults to all in Dataset.
+            percentiles: Flow percentiled (natural) for which calculations should be
+                performed. Defaults to all in Dataset.
+            exclude_swabs_with_hofs: Whether to exclude SWABS with HOFs from impact
+                calculations.
+            exclude_gwabs: Groundwater abstractions to exclude from updated impact
+                calculations. List should contain entries from UNIQUEID in GWABs_NBB.
+            exclude_swabs: Surface water abstractions to exclude from updated impact
+                calculations. List should contain entries from UNIQUEID in SWABS_NBB.
+
+        Notes:
+
+            WRGIS models the relationships between long-term average abstraction and
+            impacts at different flow percentiles. For GWABS, the calculations are
+            based on the "IMPFAC" field in GWABs_NBB. For SWABS, the calculations draw
+            on the start/end months in SWABS_NBB, which are used to identify relevant
+            factors in the Seasonal_Lookup table.
+
+            This method performs these calculations for GWABS and SWABS. Complex
+            abstractions/impacts in the SupResGW_NBB table are not handled. The impacts
+            for each scenario/percentile combination calculated by this method account
+            for local consumptiveness. In contrast, the long-term average abstractions
+            that form an "input" to the calculations should *exclude* the effects of
+            local consumptiveness. See the notes for the ``infer_mean_abstraction``
+            method for further details.
+
+            Lists of abstractions to be excluded from long-term average calculations can
+            be supplied via the ``exclude_gwabs`` and ``exclude_swabs`` arguments.
+            Abstractions to be excluded should be specified using their UNIQUEID.
+
+            It is assumed that the relevant *long-term average* columns are already
+            present in the relevant tables before this method is called.
+
+            It is also assumed that the relevant *scenario/percentile impact* columns are
+            already present before this method is called. The role of the method is to
+            update these impacts for any abstractions that are not listed in
+            ``exclude_gwabs`` or ``exclude_swabs`` arguments.
+
+            Finally, we note that the impacts calculated by this method are
+            "unconstrained". They are not limited by the actual available flow in a
+            waterbody, which might mean that the impacts are not fully realisable. In
+            addition, the impacts calculated by this method are not guaranteed to
+            respect any HOF conditions. See ``Calculator.__init__`` for further guidance
+            on this point.
+
+        """
+        if scenarios is None:
+            scenarios = self.scenarios
+        if percentiles is None:
+            percentiles = self.percentiles
+        if exclude_gwabs is None:
+            exclude_gwabs = []
+        if exclude_swabs is None:
+            exclude_swabs = []
+
+        if self.gwabs.data.shape[0] > 0:
+            for scenario, percentile in itertools.product(scenarios, percentiles):
+                self.gwabs.infer_percentile_impact(scenario, percentile, exclude_gwabs)
+
+        if self.swabs.data.shape[0] > 0:
+            for scenario, percentile in itertools.product(scenarios, percentiles):
+                self.swabs.infer_percentile_impact(
+                    scenario, percentile, self.sfac, exclude_swabs,
+                    exclude_swabs_with_hofs,
+                )
+
+    def set_reference_flows(self):
+        """
+        Calculate reference flows based on (relative) deviation from natural flows.
+
+        Deviations are calculated using abstraction sensitivity bands (ASBs). The
+        fractional deviations associated with each flow percentile for each ASB are
+        given in the ASBPercentages table. ASBs per waterbody are given in
+        AbsSensBands_NBB. This is how the reference flow is calculated in WRGIS.
+
+        A call to this method sets (or resets) the ``self.refs.data`` attribute
+        (dataframe). Any existing columns in this dataframe will be replaced. The
+        method may be useful if changes have been made to natural flows or ASBs for
+        one or more waterbodies. Otherwise, calling this method is not required in a
+        typical use case, as pre-calculated reference flows are distributed as part of
+        SACO datasets.
+
+        """
+        asb_col = self.asbs.asb_column
+        perc_col = self.asb_percs.percent_column
+
+        qnat_cols = [
+            self.qnat.get_value_column(p, self.constants.ups_abb) for p in self.percentiles
+        ]
+        df = pd.concat([self.qnat.data[qnat_cols], self.asbs.data], axis=1)
+
+        dfs = []
+        ref_cols = []
+        for p in self.percentiles:
+            p_label = self.asb_percs.percentile_label(p)
+            percs = self.asb_percs.data.loc[
+                self.asb_percs.data.index.get_level_values(0) == p_label
+            ].reset_index()
+            percs = percs.drop(columns=self.asb_percs.index_name[0])
+            percs = percs.rename(columns={self.asb_percs.index_name[1]: asb_col})
+
+            qnat_col = self.qnat.get_value_column(p, self.constants.ups_abb)
+            ref_col = self.refs.get_value_column(p)
+
+            df1 = df[[qnat_col, asb_col]].reset_index().merge(percs, how='left', on=asb_col)
+            df1 = df1.set_index(self.constants.waterbody_id_column)
+            df1.loc[df1[perc_col].isna(), perc_col] = 1.0
+
+            df1[ref_col] = df1[qnat_col] - (df1[qnat_col] * df1[perc_col])
+
+            dfs.append(df1[[ref_col]])
+            ref_cols.append(ref_col)
+
+        df2 = pd.concat(dfs, axis=1)
+        df2 = df2[ref_cols]
+
+        self.refs.data = df2
 
     def _calculate_flow_targets(
             self, overall_target: str, use_fix_flags_table: bool = True,
