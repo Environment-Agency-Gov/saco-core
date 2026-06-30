@@ -70,8 +70,8 @@ class Table(ABC):
 
         self.data = df
 
-        if validate is True:
-            if filter_columns and (self.schema is not None):
+        if validate is True and self.schema is not None:
+            if filter_columns:
                 cols = set(self.schema.columns.keys()).intersection(
                     set(self.data.columns)
                 )
@@ -658,11 +658,11 @@ class Seasonal_Lookup(DataTable):
 class SWABS_NBB(DataTable):
     """
     Table for surface water abstraction impacts at the licence-point-purpose level.
-
+    
     """
     def set_schema(
             self, unique_index: bool = True, check_positive: bool = False,
-            nullable_waterbody_column: bool = False, auxiliary_mode: bool = False,
+            nullable_waterbody_column: bool = True, auxiliary_mode: bool = False,
     ):
         auxiliary_columns = self._auxiliary_columns_helper(nullable_waterbody_column)
         auxiliary_columns[self.hof_value_column] = {'type': float, 'nullable': False}
@@ -966,7 +966,7 @@ class Discharges_NBB(DataTable):
     """
     def set_schema(
             self, unique_index: bool = True, check_positive: bool = True,
-            nullable_waterbody_column: bool = False, auxiliary_mode: bool = False,
+            nullable_waterbody_column: bool = True, auxiliary_mode: bool = False,
     ):
         auxiliary_columns = self._auxiliary_columns_helper(nullable_waterbody_column)
 
@@ -1182,6 +1182,10 @@ class IntegratedWBs_NBB(Table):
     Table for basic waterbody metadata.
 
     """
+    def __init__(self, constants: Constants = None):
+        super().__init__(constants)
+        self.set_schema()
+
     def set_schema(self, unique_index: bool = True, strict='filter'):
         self._schema = pa.DataFrameSchema(
             {
@@ -1238,6 +1242,10 @@ class AbsSensBands_NBB(Table):
     Table for abstraction sensitivity bands (ASBs) per waterbody.
 
     """
+    def __init__(self, constants: Constants = None):
+        super().__init__(constants)
+        self.set_schema()
+
     def set_schema(self, unique_index: bool = True):
         self._schema = pa.DataFrameSchema(
             {self.asb_column: pa.Column(int)},
@@ -1268,6 +1276,10 @@ class ASBPercentages(Table):
     Table defining permitted deviations from natural flow by ASB.
 
     """
+    def __init__(self, constants: Constants = None):
+        super().__init__(constants)
+        self.set_schema()
+
     def set_schema(self):
         self._schema = pa.DataFrameSchema(
             {self.percent_column: pa.Column(
@@ -1374,6 +1386,10 @@ class Fix_Flags(Table):
     Table for flags indicating level to which each waterbody should be "fixed".
 
     """
+    def __init__(self, constants: Constants = None):
+        super().__init__(constants)
+        self.set_schema()
+
     def set_schema(self, unique_index: bool = True):
         self._schema = pa.DataFrameSchema(
             {self.fix_flag_column: pa.Column(int)},
@@ -1425,6 +1441,7 @@ class Master(Table):
         super().__init__()
         self._scenarios = scenarios
         self._percentiles = percentiles
+        self.set_schema()
 
     def set_schema(self) -> pa.DataFrameSchema:
         # TODO: Implement schema
