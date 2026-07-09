@@ -1040,17 +1040,15 @@ class SupResGW_NBB(DataTable):
     ):
         auxiliary_columns = self._auxiliary_columns_helper(nullable_waterbody_column)
         auxiliary_columns[self.purpose_column] = {'type': str, 'nullable': False}
+        auxiliary_columns[self.type_column] = {
+            'type': str, 'nullable': False,
+            'checks': pa.Check(lambda x: x.isin(['Fixed', 'Qmin']).all()),
+        }
 
         # Metadata columns that are not used in the code (and do not have a property to
         # indicate the column name)
         auxiliary_columns['NAME'] = {'type': str, 'nullable': True, 'required': False}
         auxiliary_columns['OPERATOR'] = {
-            'type': str, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['TYPE_SUPRESGW'] = {
-            'type': str, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['PURPOSE'] = {
             'type': str, 'nullable': True, 'required': False,
         }
 
@@ -1127,6 +1125,11 @@ class SupResGW_NBB(DataTable):
     def optimise_flag_column(self) -> str:
         """Column indicating whether/how a row should be included in optimisation."""
         return self.constants.optimise_flag_column
+
+    @property
+    def type_column(self) -> str:
+        """Column indicating complex impact type ("Fixed" or "Qmin")."""
+        return 'TYPE_SUPRESGW'
 
 
 class QNaturalFlows_NBB(DataTable):
