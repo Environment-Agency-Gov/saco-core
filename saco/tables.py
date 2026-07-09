@@ -1045,6 +1045,12 @@ class SupResGW_NBB(DataTable):
             'checks': pa.Check(lambda x: x.isin(['Fixed', 'Qmin']).all()),
         }
 
+        for scenario in self.scenarios:
+            qmin_target_col = self.get_qmin_target_column(scenario)
+            auxiliary_columns[qmin_target_col] = {
+                'type': float, 'nullable': False, 'required': False,
+            }
+
         # Metadata columns that are not used in the code (and do not have a property to
         # indicate the column name)
         auxiliary_columns['NAME'] = {'type': str, 'nullable': True, 'required': False}
@@ -1091,6 +1097,11 @@ class SupResGW_NBB(DataTable):
         """
         return f'{self.variable_abb}{scenario}Q{percentile}_MAX_INCREASE'
 
+    @staticmethod
+    def get_qmin_target_column(scenario: str) -> str:
+        """Column containing Qmin flow target."""
+        return f'QMIN{scenario}'
+
     @property
     def name(self) -> str:
         return 'SupResGW_NBB'
@@ -1130,6 +1141,11 @@ class SupResGW_NBB(DataTable):
     def type_column(self) -> str:
         """Column indicating complex impact type ("Fixed" or "Qmin")."""
         return 'TYPE_SUPRESGW'
+
+    @property
+    def qmin_abb(self) -> str:
+        """QMIN abbreviation in type column."""
+        return 'Qmin'
 
 
 class QNaturalFlows_NBB(DataTable):
