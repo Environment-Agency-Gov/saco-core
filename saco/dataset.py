@@ -198,8 +198,13 @@ class Dataset:
                 - 'qnat': QNaturalFlows_NBB (waterbody natural flows)
                 - 'wbs': IntegratedWBs_NBB (waterbody metadata)
                 - 'asbs' AbsSensBands_NBB (waterbody abstraction sensitivity bands)
-                - 'asb_percs': ASBPercentages (fractional deviations defining the EFI)
-                - 'efi': EFI (waterbody environmental flow indicator)
+                - 'asb_percs': ASBPercentages (fractional deviations defining the
+                   reference flows)
+                - 'refs': Reference flows (waterbody EFI (typically))
+                - 'sfac': Seasonal_Lookup (for SWABS long-term average to
+                   percentile impact conversions)
+                - 'mt': Master
+                - 'wbfx': Fix_Flags (waterbody "fix" levels, e.g. compliance, no-det)
 
             The *data* attribute of each table can also be set directly (if preferred),
             for example: ``Dataset.swabs.data = pd.DataFrame(...)``.
