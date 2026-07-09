@@ -288,8 +288,15 @@ class DataTable(Table, ABC):
                     required = details['required']
                 else:
                     required = auxiliary_required
+
+                if 'checks' in details.keys():
+                    checks = details['checks']
+                else:
+                    checks = None
+
                 dc[col] = pa.Column(
                     details['type'], nullable=details['nullable'], required=required,
+                    checks=checks,
                 )
 
         schema = pa.DataFrameSchema(
