@@ -399,6 +399,9 @@ class GWABs_NBB(DataTable):
             'type': bool, 'nullable': False, 'required': False,
         }
         auxiliary_columns[self.purpose_column] = {'type': str, 'nullable': False}
+        auxiliary_columns[self.licence_start_column] = {
+            'type': pa.dtypes.DateTime, 'nullable': False, 'required': False,
+        }
         auxiliary_columns[self.licence_expiry_column] = {'type': str, 'nullable': True}
 
         auxiliary_columns[self.consumptiveness_column] = {
@@ -588,6 +591,11 @@ class GWABs_NBB(DataTable):
         return 'PURPCODE'
 
     @property
+    def licence_start_column(self) -> str:
+        """Name of column with date indicating licence start date."""
+        return 'LICN_ORGN'
+
+    @property
     def licence_expiry_column(self) -> str:
         """Name of column with date/flag indicating licence expiry date."""
         return 'LICN_EXPD'
@@ -682,6 +690,9 @@ class SWABS_NBB(DataTable):
         auxiliary_columns[self.ldmu_flag_column] = {'type': int, 'nullable': False}
         for lake_col in self.lake_flag_columns:
             auxiliary_columns[lake_col] = {'type': int, 'nullable': False}
+        auxiliary_columns[self.licence_start_column] = {
+            'type': pa.dtypes.DateTime, 'nullable': False, 'required': False,
+        }
         auxiliary_columns[self.licence_expiry_column] = {'type': str, 'nullable': True}
 
         auxiliary_columns[self.consumptiveness_column] = {
@@ -930,6 +941,11 @@ class SWABS_NBB(DataTable):
     def lake_flag_columns(self) -> List[str]:
         """Name of columns indicating whether an abstraction is lake-related."""
         return [f'SW_LAKE{i}' for i in range(1, 6)]
+
+    @property
+    def licence_start_column(self) -> str:
+        """Name of column with date indicating licence start date."""
+        return 'LICN_ORGN'
 
     @property
     def licence_expiry_column(self) -> str:
