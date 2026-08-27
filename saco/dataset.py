@@ -223,7 +223,7 @@ class Dataset:
                 self.wbs.data[self.wbs.downstream_waterbody_column]
             )
         self._graph = graph
-        self._adjacency_matrix = nx.adjacency_matrix(graph).todense()
+        self._adjacency_matrix = nx.adjacency_matrix(graph, dtype=bool).todense()
 
     def set_routing_matrix(self, routing_matrix: np.ndarray = None):
         """
@@ -236,7 +236,7 @@ class Dataset:
         """
         if routing_matrix is None:
             routing_matrix = construct_routing_matrix(self.graph)
-        self._routing_matrix = routing_matrix
+        self._routing_matrix = routing_matrix.astype(bool)
 
     def write_tables(
             self, output_folder: Union[Path, str], overwrite: bool = False,
