@@ -138,7 +138,7 @@ detail in the <a class="reference internal" href="calculator.html"><span class="
 <p>A <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> is primarily used to store and group together the relevant data tables
 (i.e. primarily WRGIS tables). One way to get going with a <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> (and the tool
 in general) is to load a folder of data table files:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">data_folder</span><span class="o">=</span><span class="s1">&#39;/path/to/my/data-folder&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">data_folder</span><span class="o">=</span><span class="s1">'/path/to/my/data-folder'</span><span class="p">)</span>
 <span class="n">ds</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -195,7 +195,7 @@ the preceding paragraph.</p></li>
 </ul>
 </div></blockquote>
 <p>An example of the latter approach to change a surface water abstraction impact would be:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">swabs</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">swabs</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">&#39;swab-unique-id&#39;</span><span class="p">,</span> <span class="s1">&#39;SWQ95FLWR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.23</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">swabs</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">swabs</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">'swab-unique-id'</span><span class="p">,</span> <span class="s1">'SWQ95FLWR'</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.23</span>
 </pre></div>
 </div>
 <p>This would change the abstraction impact under the fully licensed (FL) artificial
@@ -245,7 +245,7 @@ methodological choices (see below for more on this).</p>
 table (i.e. one that is consistent with all the other tables in the <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>). If we
 want to save this <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> (i.e. all of its component tables) at this point, we could
 do so as follows (see <a class="reference internal" href="reference-dataset.html"><span class="doc">Dataset</span></a> for guidance on output options):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output_dataset</span><span class="o">.</span><span class="n">write_tables</span><span class="p">(</span><span class="n">output_folder</span><span class="o">=</span><span class="s1">&#39;/my/output/folder&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">output_dataset</span><span class="o">.</span><span class="n">write_tables</span><span class="p">(</span><span class="n">output_folder</span><span class="o">=</span><span class="s1">'/my/output/folder'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>However, if we want to customise the execution of the <code class="docutils literal notranslate"><span class="pre">Calculator</span></code>, we can provide
@@ -256,7 +256,7 @@ that cannot be satisfied. See <a class="reference internal" href="calculator.htm
 point. By default, the Calculator takes a WRGIS-like approach to this issue. Using the
 <a class="reference internal" href="reference-calculate.html"><span class="doc">Calculator</span></a> documentation to understand the available options, we could
 override the default and take WBAT-like approach as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">calculator</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">capping_method</span><span class="o">=</span><span class="s1">&#39;simple&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">calculator</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="n">capping_method</span><span class="o">=</span><span class="s1">'simple'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>We might then for example ask the <code class="docutils literal notranslate"><span class="pre">Calculator.run</span></code> method to return only an updated
@@ -342,7 +342,7 @@ for more details.</p>
 run method of the <code class="docutils literal notranslate"><span class="pre">Optimiser</span></code> as below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">optimiser</span> <span class="o">=</span> <span class="n">Optimiser</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
 <span class="n">output_dataset</span> <span class="o">=</span> <span class="n">optimiser</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-<span class="n">output_dataset</span><span class="o">.</span><span class="n">write_tables</span><span class="p">(</span><span class="n">output_folder</span><span class="o">=</span><span class="s1">&#39;/my/output/folder&#39;</span><span class="p">)</span>
+<span class="n">output_dataset</span><span class="o">.</span><span class="n">write_tables</span><span class="p">(</span><span class="n">output_folder</span><span class="o">=</span><span class="s1">'/my/output/folder'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>However, the <a class="reference internal" href="reference-optimise.html"><span class="doc">Optimiser</span></a> section provides information on options that we
@@ -351,7 +351,7 @@ such option concerns the geographical domain considered. By default, the code ab
 will run the <code class="docutils literal notranslate"><span class="pre">Optimiser</span></code> for the whole domain contained in the input <code class="docutils literal notranslate"><span class="pre">Dataset</span></code>. The
 following lines provide an example of how to run for only part of the domain (referring
 to the most downstream waterbody of interest as an “outlet”):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">outlet_waterbody</span> <span class="o">=</span> <span class="s1">&#39;outlet-waterbody-id&#39;</span>  <span class="c1"># could be a list of outlet waterbodies</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">outlet_waterbody</span> <span class="o">=</span> <span class="s1">'outlet-waterbody-id'</span>  <span class="c1"># could be a list of outlet waterbodies</span>
 
 <span class="n">selected_waterbodies</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">identify_upstream_waterbodies</span><span class="p">(</span><span class="n">outlet_waterbody</span><span class="p">)</span>
 
@@ -409,14 +409,14 @@ has not already been added to the table.</p>
 <p>If we wish to include specific complex impacts in optimisation, we need to manually
 adjust the flag column for the appropriate rows. This can be achieved in memory using
 dataframe operations, for example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">&#39;complex-impact-id&#39;</span><span class="p">,</span> <span class="s1">&#39;Optimise_Flag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">'complex-impact-id'</span><span class="p">,</span> <span class="s1">'Optimise_Flag'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 </pre></div>
 </div>
 <p>If we specify that a reservoir compensation flow increase is allowed in optimisation,
 we also need to indicate that maximum increase permitted. This should be done for the
 relevant scenarios and percentiles under consideration. For example, to permit a maximum
 reservoir compensation flow increase of 5.0 Ml/d, we could do the following:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">&#39;complex-impact-id&#39;</span><span class="p">,</span> <span class="s1">&#39;SUPFLQ95_MAX_INCREASE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">5.0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">sup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="s1">'complex-impact-id'</span><span class="p">,</span> <span class="s1">'SUPFLQ95_MAX_INCREASE'</span><span class="p">]</span> <span class="o">=</span> <span class="mf">5.0</span>
 </pre></div>
 </div>
 <p>Once the flag field and any maximum increase fields have been added to the relevant
