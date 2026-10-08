@@ -288,8 +288,15 @@ class DataTable(Table, ABC):
                     required = details['required']
                 else:
                     required = auxiliary_required
+
+                if 'checks' in details.keys():
+                    checks = details['checks']
+                else:
+                    checks = None
+
                 dc[col] = pa.Column(
                     details['type'], nullable=details['nullable'], required=required,
+                    checks=checks,
                 )
 
         schema = pa.DataFrameSchema(
@@ -392,6 +399,9 @@ class GWABs_NBB(DataTable):
             'type': bool, 'nullable': False, 'required': False,
         }
         auxiliary_columns[self.purpose_column] = {'type': str, 'nullable': False}
+        auxiliary_columns[self.licence_start_column] = {
+            'type': pa.dtypes.DateTime, 'nullable': False, 'required': False,
+        }
         auxiliary_columns[self.licence_expiry_column] = {'type': str, 'nullable': True}
 
         auxiliary_columns[self.consumptiveness_column] = {
@@ -581,6 +591,11 @@ class GWABs_NBB(DataTable):
         return 'PURPCODE'
 
     @property
+    def licence_start_column(self) -> str:
+        """Name of column with date indicating licence start date."""
+        return 'LICN_ORGN'
+
+    @property
     def licence_expiry_column(self) -> str:
         """Name of column with date/flag indicating licence expiry date."""
         return 'LICN_EXPD'
@@ -675,6 +690,9 @@ class SWABS_NBB(DataTable):
         auxiliary_columns[self.ldmu_flag_column] = {'type': int, 'nullable': False}
         for lake_col in self.lake_flag_columns:
             auxiliary_columns[lake_col] = {'type': int, 'nullable': False}
+        auxiliary_columns[self.licence_start_column] = {
+            'type': pa.dtypes.DateTime, 'nullable': False, 'required': False,
+        }
         auxiliary_columns[self.licence_expiry_column] = {'type': str, 'nullable': True}
 
         auxiliary_columns[self.consumptiveness_column] = {
@@ -925,6 +943,11 @@ class SWABS_NBB(DataTable):
         return [f'SW_LAKE{i}' for i in range(1, 6)]
 
     @property
+    def licence_start_column(self) -> str:
+        """Name of column with date indicating licence start date."""
+        return 'LICN_ORGN'
+
+    @property
     def licence_expiry_column(self) -> str:
         """Name of column with date/flag indicating licence expiry date."""
         return 'LICN_EXPD'
@@ -1033,17 +1056,21 @@ class SupResGW_NBB(DataTable):
     ):
         auxiliary_columns = self._auxiliary_columns_helper(nullable_waterbody_column)
         auxiliary_columns[self.purpose_column] = {'type': str, 'nullable': False}
+        auxiliary_columns[self.type_column] = {
+            'type': str, 'nullable': False,
+            'checks': pa.Check(lambda x: x.isin(['Fixed', 'Qmin']).all()),
+        }
+
+        for scenario in self.scenarios:
+            qmin_target_col = self.get_qmin_target_column(scenario)
+            auxiliary_columns[qmin_target_col] = {
+                'type': float, 'nullable': False, 'required': False,
+            }
 
         # Metadata columns that are not used in the code (and do not have a property to
         # indicate the column name)
         auxiliary_columns['NAME'] = {'type': str, 'nullable': True, 'required': False}
         auxiliary_columns['OPERATOR'] = {
-            'type': str, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['TYPE_SUPRESGW'] = {
-            'type': str, 'nullable': True, 'required': False,
-        }
-        auxiliary_columns['PURPOSE'] = {
             'type': str, 'nullable': True, 'required': False,
         }
 
@@ -1086,6 +1113,11 @@ class SupResGW_NBB(DataTable):
         """
         return f'{self.variable_abb}{scenario}Q{percentile}_MAX_INCREASE'
 
+    @staticmethod
+    def get_qmin_target_column(scenario: str) -> str:
+        """Column containing Qmin flow target."""
+        return f'QMIN{scenario}'
+
     @property
     def name(self) -> str:
         return 'SupResGW_NBB'
@@ -1120,6 +1152,16 @@ class SupResGW_NBB(DataTable):
     def optimise_flag_column(self) -> str:
         """Column indicating whether/how a row should be included in optimisation."""
         return self.constants.optimise_flag_column
+
+    @property
+    def type_column(self) -> str:
+        """Column indicating complex impact type ("Fixed" or "Qmin")."""
+        return 'TYPE_SUPRESGW'
+
+    @property
+    def qmin_abb(self) -> str:
+        """QMIN abbreviation in type column."""
+        return 'Qmin'
 
 
 class QNaturalFlows_NBB(DataTable):
