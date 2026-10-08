@@ -358,8 +358,8 @@ class Optimiser:
         ds = concatenate_datasets(interim_datasets)
         self.output_dataset = self._initialise_output_dataset(ds)
 
-        # Augment dataset with tables of SWABS and GWABS changes relative to reference
-        # dataset. The derive_changes method identifies changes for specific
+        # Augment dataset with tables of SWABS, GWABS and complex changes relative to
+        # reference dataset. The derive_changes method identifies changes for specific
         # scenario/percentile combinations - the _infer_mean_abstraction method finds
         # changes in long-term averages too
         self.derive_changes()
