@@ -319,7 +319,7 @@ class DataPreparer:
         qt_col = self.ds.mt.get_qt_column(self.scenario, self.percentile)
         if np.any(ds2.mt.data[f'{scen_col}__MAX'] < ds2.mt.data[qt_col]):
             _wbs = ds2.mt.data.loc[
-                ds2.mt.data[f'{scen_col}__MAX'] < ds3.mt.data[qt_col]
+                ds2.mt.data[f'{scen_col}__MAX'] < ds2.mt.data[qt_col]
             ].index.tolist()
             _n_wbs = len(_wbs)
             warnings.warn(
