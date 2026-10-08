@@ -125,8 +125,19 @@ full table names):</p>
 <li><p>‘qnat’: QNaturalFlows_NBB (waterbody natural flows)</p></li>
 <li><p>‘wbs’: IntegratedWBs_NBB (waterbody metadata)</p></li>
 <li><p>‘asbs’ AbsSensBands_NBB (waterbody abstraction sensitivity bands)</p></li>
-<li><p>‘asb_percs’: ASBPercentages (fractional deviations defining the EFI)</p></li>
-<li><p>‘efi’: EFI (waterbody environmental flow indicator)</p></li>
+<li><dl class="simple">
+<dt>‘asb_percs’: ASBPercentages (fractional deviations defining the</dt><dd><p>reference flows)</p>
+</dd>
+</dl>
+</li>
+<li><p>‘refs’: Reference flows (waterbody EFI (typically))</p></li>
+<li><dl class="simple">
+<dt>‘sfac’: Seasonal_Lookup (for SWABS long-term average to</dt><dd><p>percentile impact conversions)</p>
+</dd>
+</dl>
+</li>
+<li><p>‘mt’: Master</p></li>
+<li><p>‘wbfx’: Fix_Flags (waterbody “fix” levels, e.g. compliance, no-det)</p></li>
 </ul>
 </div></blockquote>
 <p>The <em>data</em> attribute of each table can also be set directly (if preferred),
